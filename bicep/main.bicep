@@ -101,3 +101,57 @@ module storageAccount '../avm/res/storage/storage-account/main.bicep' = [for (st
 }
 }
 ]
+
+
+param avd object
+module avdResource '../avm/res/desktop-virtualization/host-pool/main.bicep' = {
+  name: '${uniqueString(deployment().name, avd.properties.friendlyName)}-avd'
+  scope: resourceGroup('${resourceGroupName}-${environmentTypeLowerCase}')
+  
+  params: {
+    name: avd.properties.friendlyName
+    location: location
+    tags: tags
+    friendlyName: avd.properties.friendlyName
+    description: avd.properties.description
+    hostPoolType: avd.properties.hostPoolType
+    personalDesktopAssignmentType: avd.properties.personalDesktopAssignmentType
+    loadBalancerType: avd.properties.loadBalancerType
+    preferredAppGroupType: avd.properties.preferredAppGroupType
+  }
+}
+
+param arcEnabledServers array
+
+var arcEnabledServersConfigs = [for (arcEnabledServer, i) in arcEnabledServers: {
+  name: arcEnabledServer.name
+    location: arcEnabledServer.location
+    tags: arcEnabledServer.tags
+    osType: arcEnabledServer.osType
+    vmSize: arcEnabledServer.vmSize
+    adminUsername: arcEnabledServer.adminUsername
+    adminPassword: arcEnabledServer.adminPassword
+    imageReference: arcEnabledServer.imageReference
+    nicConfigurations: arcEnabledServer.nicConfigurations
+    osDisk: arcEnabledServer.osDisk
+    zone: arcEnabledServer.zone
+}]
+
+module arcEnabledServer '../avm/res/compute/virtual-machine/main.bicep' = [for (arcEnabledServer, i) in arcEnabledServersConfigs: {
+  name: '${uniqueString(deployment().name, arcEnabledServer.name)}-arc'
+  scope: resourceGroup('${resourceGroupName}-${environmentTypeLowerCase}')
+  
+  params: {
+    name: arcEnabledServer.name
+    location: arcEnabledServer.location
+    tags: arcEnabledServer.tags
+    osType: arcEnabledServer.osType
+    vmSize: arcEnabledServer.vmSize
+    adminUsername: arcEnabledServer.adminUsername
+    adminPassword: arcEnabledServer.adminPassword
+    imageReference: arcEnabledServer.imageReference
+    nicConfigurations: arcEnabledServer.nicConfigurations
+    osDisk: arcEnabledServer.osDisk
+    zone: arcEnabledServer.zone
+  }
+}]
