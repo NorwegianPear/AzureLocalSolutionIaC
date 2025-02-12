@@ -1,0 +1,54 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "norwayeast"
+        },
+        "environmentType": {
+            "value": "DEV"
+        },
+        "environmentTypeLowerCase": {
+            "value": "dev"
+        },
+        "ResourceGroupname": {
+            "value": "wms-avd-rg"
+        },
+        "avd": {
+            "value": {
+                "properties": {
+                    "friendlyName": "CoolHostPool",
+                    "description": "This is a cool host pool for Azure Virtual Desktop.",
+                    "hostPoolType": "Personal",
+                    "personalDesktopAssignmentType": "Automatic",
+                    "loadBalancerType": "BreadthFirst",
+                    "preferredAppGroupType": "Desktop"
+                }
+            }
+        },
+        "arcEnabledServers": {
+            "value": [
+                {
+                    "name": "windowsArcServer",
+                    "osType": "Windows",
+                    "vmSize": "Standard_DS1_v2",
+                    "adminUsername": "azureuser",
+                    "adminPassword": "P@ssw0rd1234"
+                },
+                {
+                    "name": "linuxArcServer",
+                    "osType": "Linux",
+                    "vmSize": "Standard_DS1_v2",
+                    "adminUsername": "azureuser",
+                    "adminPassword": "P@ssw0rd1234"
+                }
+            ]
+        },
+        "tags": {
+            "value": {
+                "Solution": "Repository",
+                "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
+            }
+        }
+    }
+}
