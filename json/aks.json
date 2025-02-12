@@ -1,0 +1,110 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "norwayeast"
+        },
+        "environmentType": {
+            "value": "DEV"
+        },
+        "environmentTypeLowerCase": {
+            "value": "dev"
+        },
+        "ResourceGroupname": {
+            "value": "aks-kubernetes-arc-rg"
+        },
+        "kubernetesApplications": {
+            "value": [
+                {
+                    "name": "myK8sApp",
+                    "namespace": "default",
+                    "replicas": 3,
+                    "image": "nginx:latest"
+                }
+            ]
+        },
+        "arcEnabledServices": {
+            "value": [
+                {
+                    "name": "arcService1",
+                    "type": "PostgreSQL",
+                    "version": "12"
+                },
+                {
+                    "name": "arcService2",
+                    "type": "SQLManagedInstance",
+                    "version": "2019"
+                }
+            ]
+        },
+        "aksClusters": {
+            "value": [
+                {
+                    "name": "coolAksCluster1",
+                    "location": "norwayeast",
+                    "kubernetesVersion": "1.20.7",
+                    "dnsPrefix": "coolakscluster1",
+                    "agentPoolProfiles": [
+                        {
+                            "name": "agentpool1",
+                            "count": 3,
+                            "vmSize": "Standard_DS2_v2",
+                            "osType": "Linux"
+                        }
+                    ],
+                    "servicePrincipalProfile": {
+                        "clientId": "<client-id-1>",
+                        "secret": "<client-secret-1>"
+                    },
+                    "storageProfile": {
+                        "storageAccountName": "storageaccount1"
+                    }
+                },
+                {
+                    "name": "coolAksCluster2",
+                    "location": "norwayeast",
+                    "kubernetesVersion": "1.20.7",
+                    "dnsPrefix": "coolakscluster2",
+                    "agentPoolProfiles": [
+                        {
+                            "name": "agentpool2",
+                            "count": 3,
+                            "vmSize": "Standard_DS2_v2",
+                            "osType": "Linux"
+                        }
+                    ],
+                    "servicePrincipalProfile": {
+                        "clientId": "<client-id-2>",
+                        "secret": "<client-secret-2>"
+                    },
+                    "storageProfile": {
+                        "storageAccountName": "storageaccount2"
+                    }
+                }
+            ]
+        },
+        "storageAccounts": {
+            "value": [
+                {
+                    "name": "storageaccount1",
+                    "location": "norwayeast",
+                    "sku": "Standard_LRS",
+                    "kind": "StorageV2"
+                },
+                {
+                    "name": "storageaccount2",
+                    "location": "norwayeast",
+                    "sku": "Standard_LRS",
+                    "kind": "StorageV2"
+                }
+            ]
+        },
+        "tags": {
+            "value": {
+                "Solution": "Repository",
+                "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
+            }
+        }
+    }
+}

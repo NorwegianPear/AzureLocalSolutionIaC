@@ -1,0 +1,249 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.32.4.45862",
+      "templateHash": "13579745508079509440"
+    },
+    "name": "DevTest Lab Schedules",
+    "description": "This module deploys a DevTest Lab Schedule.\n\nLab schedules are used to modify the settings for auto-shutdown, auto-start for lab virtual machines."
+  },
+  "definitions": {
+    "dailyRecurrenceType": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "string",
+          "metadata": {
+            "description": "Required. The time of day the schedule will occur."
+          }
+        }
+      },
+      "nullable": true,
+      "metadata": {
+        "__bicep_export!": true
+      }
+    },
+    "hourlyRecurrenceType": {
+      "type": "object",
+      "properties": {
+        "minute": {
+          "type": "int",
+          "metadata": {
+            "description": "Required. Minutes of the hour the schedule will run."
+          }
+        }
+      },
+      "nullable": true,
+      "metadata": {
+        "__bicep_export!": true
+      }
+    },
+    "weeklyRecurrenceType": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "string",
+          "metadata": {
+            "description": "Required. The time of day the schedule will occur."
+          }
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Required. The days of the week for which the schedule is set (e.g. Sunday, Monday, Tuesday, etc.)."
+          }
+        }
+      },
+      "nullable": true,
+      "metadata": {
+        "__bicep_export!": true
+      }
+    },
+    "notificationSettingsType": {
+      "type": "object",
+      "properties": {
+        "emailRecipient": {
+          "type": "string",
+          "nullable": true,
+          "metadata": {
+            "description": "Conditional. The email recipient to send notifications to (can be a list of semi-colon separated email addresses). Required if \"webHookUrl\" is empty."
+          }
+        },
+        "notificationLocale": {
+          "type": "string",
+          "nullable": true,
+          "metadata": {
+            "description": "Optional. The locale to use when sending a notification (fallback for unsupported languages is EN)."
+          }
+        },
+        "status": {
+          "type": "string",
+          "allowedValues": [
+            "Disabled",
+            "Enabled"
+          ],
+          "nullable": true,
+          "metadata": {
+            "description": "Optional. If notifications are enabled for this schedule (i.e. Enabled, Disabled). Default is Disabled."
+          }
+        },
+        "timeInMinutes": {
+          "type": "int",
+          "nullable": true,
+          "metadata": {
+            "description": "Optional. Time in minutes before event at which notification will be sent. Default is 30 minutes if status is Enabled and not specified."
+          }
+        },
+        "webHookUrl": {
+          "type": "string",
+          "nullable": true,
+          "metadata": {
+            "description": "Conditional. The webhook URL to which the notification will be sent. Required if \"emailRecipient\" is empty."
+          }
+        }
+      },
+      "nullable": true,
+      "metadata": {
+        "__bicep_export!": true
+      }
+    }
+  },
+  "parameters": {
+    "labName": {
+      "type": "string",
+      "metadata": {
+        "description": "Conditional. The name of the parent lab. Required if the template is used in a standalone deployment."
+      }
+    },
+    "name": {
+      "type": "string",
+      "allowedValues": [
+        "LabVmsShutdown",
+        "LabVmAutoStart"
+      ],
+      "metadata": {
+        "description": "Required. The name of the schedule."
+      }
+    },
+    "taskType": {
+      "type": "string",
+      "allowedValues": [
+        "LabVmsShutdownTask",
+        "LabVmsStartupTask"
+      ],
+      "metadata": {
+        "description": "Required. The task type of the schedule (e.g. LabVmsShutdownTask, LabVmsStartupTask)."
+      }
+    },
+    "tags": {
+      "type": "object",
+      "nullable": true,
+      "metadata": {
+        "description": "Optional. Tags of the resource."
+      }
+    },
+    "dailyRecurrence": {
+      "$ref": "#/definitions/dailyRecurrenceType",
+      "metadata": {
+        "description": "Optional. If the schedule will occur once each day of the week, specify the daily recurrence."
+      }
+    },
+    "hourlyRecurrence": {
+      "$ref": "#/definitions/hourlyRecurrenceType",
+      "metadata": {
+        "description": "Optional. If the schedule will occur multiple times a day, specify the hourly recurrence."
+      }
+    },
+    "weeklyRecurrence": {
+      "$ref": "#/definitions/weeklyRecurrenceType",
+      "metadata": {
+        "description": "Optional. If the schedule will occur only some days of the week, specify the weekly recurrence."
+      }
+    },
+    "status": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "Optional. The status of the schedule (i.e. Enabled, Disabled)."
+      }
+    },
+    "targetResourceId": {
+      "type": "string",
+      "nullable": true,
+      "metadata": {
+        "description": "Optional. The resource ID to which the schedule belongs."
+      }
+    },
+    "timeZoneId": {
+      "type": "string",
+      "defaultValue": "Pacific Standard time",
+      "metadata": {
+        "description": "Optional. The time zone ID (e.g. Pacific Standard time)."
+      }
+    },
+    "notificationSettings": {
+      "$ref": "#/definitions/notificationSettingsType",
+      "metadata": {
+        "description": "Optional. The notification settings for the schedule."
+      }
+    }
+  },
+  "resources": {
+    "lab": {
+      "existing": true,
+      "type": "Microsoft.DevTestLab/labs",
+      "apiVersion": "2018-09-15",
+      "name": "[parameters('labName')]"
+    },
+    "schedule": {
+      "type": "Microsoft.DevTestLab/labs/schedules",
+      "apiVersion": "2018-09-15",
+      "name": "[format('{0}/{1}', parameters('labName'), parameters('name'))]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "taskType": "[parameters('taskType')]",
+        "dailyRecurrence": "[parameters('dailyRecurrence')]",
+        "hourlyRecurrence": "[parameters('hourlyRecurrence')]",
+        "weeklyRecurrence": "[parameters('weeklyRecurrence')]",
+        "status": "[parameters('status')]",
+        "targetResourceId": "[parameters('targetResourceId')]",
+        "timeZoneId": "[parameters('timeZoneId')]",
+        "notificationSettings": "[parameters('notificationSettings')]"
+      }
+    }
+  },
+  "outputs": {
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the schedule."
+      },
+      "value": "[parameters('name')]"
+    },
+    "resourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource ID of the schedule."
+      },
+      "value": "[resourceId('Microsoft.DevTestLab/labs/schedules', parameters('labName'), parameters('name'))]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the resource group the schedule was created in."
+      },
+      "value": "[resourceGroup().name]"
+    }
+  }
+}
