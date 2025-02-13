@@ -18,7 +18,7 @@ env:
   TenantID: ${{ secrets.AZURE_TENANT_ID }}
   AppID: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
   Subscription: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  AppSecret: ${{ secrets.CLIENT_SECRET }}
+  #AppSecret: ${{ secrets.CLIENT_SECRET }}
   #FKEYPW: ${{ secrets.FKEYPW }}
   #SubscriptionPrefix: ''
   #AdminGroup: 'IaC-Owner'
@@ -47,7 +47,7 @@ jobs:
     - name: Azure Login
       uses: azure/login@v2
       with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         enable-AzPSSession: true
@@ -100,7 +100,7 @@ jobs:
 
     - name: Assign Roles to Service Principal
       run: |
-        az role assignment create --assignee ${{ env.AZURE_CLIENT_ID }} --role Contributor --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        az role assignment create --assignee ${{ env.AZURELOCALSOLUTIONIAC_CLIENTID }} --role Contributor --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   deploy-dev:
     runs-on: ubuntu-latest
@@ -115,9 +115,11 @@ jobs:
 
 
     - name: Azure Login
-      uses: azure/login@v1
+      uses: azure/login@v2
       with:
-        client-id: ${{ env.AZURE_CLIENT_ID }}
+        client-id: ${{ env.AZURE_AZURELOCALSOLUTIONIAC_CLIENTID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Deploy Bicep
       shell: pwsh
