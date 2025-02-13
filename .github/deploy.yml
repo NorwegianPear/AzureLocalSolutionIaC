@@ -9,9 +9,26 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  TenantID: ${{ secrets.AZURE_TENANT_ID }}
+  AppID: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+  Subscription: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  #AppSecret: ${{ secrets.CLIENT_SECRET }}
+  #FKEYPW: ${{ secrets.FKEYPW }}
+  #SubscriptionPrefix: 'S499'
+  #AdminGroup: 'IaC-Owner'
+  ModulesPath: ''
+  Location: norwayeast
+  aks-resourceGroupName: aks-kubernetes-arc-rg
+  aks-KeyVaultName: ${{ env.aks-resourceGroupName }}-kv
+
 jobs:
-  create-app-registration:
+  dev:
+    create-app-registration:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.repository.environment }}
+    env:
+      environmentName: dev
 
     steps:
     - name: Checkout code
@@ -23,29 +40,61 @@ jobs:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+    - name: Install PowerShell Modules
+      shell: pwsh
+      run: |
+        Install-Module Az.Accounts -Force
+        Install-Module Az.Resources -Force
+        Install-Module Az.Network -Force
+        Install-Module Az.Compute -Force
+        Install-Module -Name AzureAD -Force -AllowClobber
+        Install-Module -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Force
+        Install-Module Az.KeyVault -Repository PSGallery -Force
 
     - name: Create App Registration and Service Principal
-      id: create_sp
+      shell: pwsh
       run: |
-        appName="AKSServicePrincipal"
-        password=$(az ad sp create-for-rbac --name $appName --skip-assignment --query password --output tsv)
-        appId=$(az ad sp show --id http://$appName --query appId --output tsv)
-        tenantId=$(az account show --query tenantId --output tsv)
-        subscriptionId=$(az account show --query id --output tsv)
+        $subscriptionId = "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+        $resourceGroupName = "${{ env.resourceGroupName }}-${{ env.environmentName }}"
+        $location = "${{ env.Location }}"
+        $keyVaultName = "${{ env.KeyVaultName }}"
 
-        echo "AZURE_CLIENT_ID=$appId" >> $GITHUB_ENV
-        echo "AZURE_CLIENT_SECRET=$password" >> $GITHUB_ENV
-        echo "AZURE_TENANT_ID=$tenantId" >> $GITHUB_ENV
-        echo "AZURE_SUBSCRIPTION_ID=$subscriptionId" >> $GITHUB_ENV
+        # Login to Azure
+        Connect-AzAccount
+        Set-AzContext -SubscriptionId $subscriptionId
+
+        # Create Resource Group
+        New-AzResourceGroup -Name $resourceGroupName -Location $location
+
+        # Create Key Vault
+        New-AzKeyVault -ResourceGroupName $resourceGroupName -VaultName $keyVaultName -Location $location
+
+        # Create App Registration and Service Principal
+        $app = New-AzADApplication -DisplayName "MyApp" -IdentifierUris "http://MyApp"
+        $sp = New-AzADServicePrincipal -ApplicationId $app.ApplicationId
+        $spPassword = New-AzADSpCredential -ObjectId $sp.Id -EndDate (Get-Date).AddYears(1)
+
+        # Store credentials in Key Vault
+        $secret = ConvertTo-SecureString -String $spPassword.SecretText -AsPlainText -Force
+        Set-AzKeyVaultSecret -VaultName $keyVaultName -Name "SP-ClientSecret" -SecretValue $secret
+        Set-AzKeyVaultSecret -VaultName $keyVaultName -Name "SP-ClientId" -SecretValue (ConvertTo-SecureString -String $sp.ApplicationId -AsPlainText -Force)
+
+        # Output Service Principal details
+        Write-Output "Service Principal ID: $($sp.ApplicationId)"
+        Write-Output "Service Principal Secret: $($spPassword.SecretText)"
+
+        echo "AZURE_CLIENT_ID=$($sp.ApplicationId)" >> $GITHUB_ENV
+        echo "AZURE_CLIENT_SECRET=$($spPassword.SecretText)" >> $GITHUB_ENV
 
     - name: Assign Roles to Service Principal
       run: |
-        az role assignment create --assignee ${{ env.AZURE_CLIENT_ID }} --role Contributor --scope /subscriptions/${{ env.AZURE_SUBSCRIPTION_ID }}
+        az role assignment create --assignee ${{ env.AZURE_CLIENT_ID }} --role Contributor --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   deploy:
     runs-on: ubuntu-latest
     needs: create-app-registration
+    environment: ${{ github.event.repository.environment }}
 
     steps:
     - name: Checkout code
@@ -58,13 +107,10 @@ jobs:
       uses: azure/login@v1
       with:
         client-id: ${{ env.AZURE_CLIENT_ID }}
-        tenant-id: ${{ env.AZURE_TENANT_ID }}
-        subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
-        client-secret: ${{ env.AZURE_CLIENT_SECRET }}
 
     - name: Deploy Bicep
       run: |
         az deployment group create \
-          --resource-group <resource-group-name> \
+          --resource-group ${{ env.resourceGroupName }} \
           --template-file bicep/main.bicep \
           --parameters @json/aks.json
