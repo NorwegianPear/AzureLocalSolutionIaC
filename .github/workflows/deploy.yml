@@ -65,15 +65,20 @@ jobs:
     - name: Deploy Bicep
       shell: pwsh
       run: |
+        $aksCluster1ClientID = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}" -AsPlainText -Force
+        $aksCluster1Secret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER1_SECRET }}" -AsPlainText -Force
+        $aksCluster2ClientID = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}" -AsPlainText -Force
+        $aksCluster2Secret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2_SECRET }}" -AsPlainText -Force
+
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/main.bicep" `
-          -resourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
-          -aksCluster1ClientID "${{ env.aksCluster1ClientID }}" `
-          -aksCluster1Secret "${{ env.aksCluster1Secret }}" `
-          -aksCluster2ClientID "${{ env.aksCluster2ClientID }}" `
-          -aksCluster2Secret "${{ env.aksCluster2Secret }}" `
-          -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
+          -ResourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
+          -SubscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -TemplateParameterFile "json/aks.json" `
-          -location "${{ env.Location }}" `
-          -tenantId "${{ secrets.AZURE_TENANT_ID }}"
+          -Location "${{ env.Location }}" `
+          -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
+          -aksCluster1ClientID $aksCluster1ClientID `
+          -aksCluster1Secret $aksCluster1Secret `
+          -aksCluster2ClientID $aksCluster2ClientID `
+          -aksCluster2Secret $aksCluster2Secret
 
