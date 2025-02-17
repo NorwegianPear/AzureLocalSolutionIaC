@@ -52,13 +52,6 @@ jobs:
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         enable-AzPSSession: true
 
-    - name: Fallback Azure Login with Access Token
-      if: failure()
-      shell: pwsh
-      run: |
-        $token = (Get-AzAccessToken -ResourceUrl https://management.azure.com).Token
-        Connect-AzAccount -AccessToken $token -TenantId $env:TenantID -SubscriptionId $env:Subscription
-
     - name: Install PowerShell Modules
       shell: pwsh
       run: |
