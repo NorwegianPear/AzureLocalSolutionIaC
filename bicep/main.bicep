@@ -1,5 +1,6 @@
 targetScope = 'subscription'
 
+param subscriptionId string?
 @description('Set basetime to UTC')
 param baseTime string = utcNow('u')
 
