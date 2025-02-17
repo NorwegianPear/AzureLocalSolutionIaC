@@ -28,14 +28,14 @@ env:
   KeyVaultName: '-kv'
 
 jobs:
-  create-app-registration-dev:
+  dev:
     runs-on: ubuntu-latest
     environment: dev
     env:
       environmentName: dev
 
     steps:
-    - name: Checkout code
+    - name: 🤑💸Checkout parameter
       uses: actions/checkout@v3
 
     - name: Install Azure module to resolve Token issue
@@ -43,7 +43,7 @@ jobs:
       with:
         version: 11.6.0          # This version of PS remediates the OIDC token expiry issue - #10249
 
-    - name: Azure Login
+    - name: 🥳 Connect to Azure
       id: azure-login
       uses: azure/login@v2
       with:
@@ -108,33 +108,6 @@ jobs:
       run: |
         az role assignment create --assignee ${{ env.AZURE_CLIENT_ID }} --role Contributor --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  deploy-dev:
-    runs-on: ubuntu-latest
-    needs: create-app-registration-dev
-    environment: dev
-    env:
-      environmentName: dev
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Azure Login
-      id: azure-login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        enable-AzPSSession: true
-
-    - name: Fallback Azure Login with Access Token
-      if: failure()
-      shell: pwsh
-      run: |
-        $token = (Get-AzAccessToken -ResourceUrl https://management.azure.com).Token
-        Connect-AzAccount -AccessToken $token -TenantId $env:TenantID -SubscriptionId $env:Subscription
-
     - name: Deploy Bicep
       shell: pwsh
       run: |
@@ -148,7 +121,7 @@ jobs:
           -tenantId "${{ secrets.AZURE_TENANT_ID }}"
 
   # Disable QA and PROD jobs for now
-  # create-app-registration-qa:
+  # qa:
   #   runs-on: ubuntu-latest
   #   environment: qa
   #   env:
