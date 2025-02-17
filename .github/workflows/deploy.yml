@@ -21,7 +21,11 @@ env:
   Location: 'norwayeast'
   aks-resourceGroupName: 'aks-kubernetes-arc-rg'
   KeyVaultName: '-kv'
-
+  aks-cluster1ClientID: ${{ secrets.COOLAKSCLUSTER1_CLIENTID }}
+  aks-cluster1Secret: ${{ secrets.COOLAKSCLUSTER1_SECRET }}
+  aks-cluster2ClientID: ${{ secrets.COOLAKSCLUSTER2_CLIENTID }}
+  aks-cluster2Secret: ${{ secrets.COOLAKSCLUSTER2_SECRET }}
+  
 jobs:
   dev:
     runs-on: ubuntu-latest
@@ -61,21 +65,17 @@ jobs:
     - name: Deploy Bicep
       shell: pwsh
       run: |
-        $parameters = @{
-            clientId1 = "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}"
-            clientSecret1 = "${{ secrets.COOLAKSCLUSTER1_SECRET }}"
-            clientId2 = "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}"
-            clientSecret2 = "${{ secrets.COOLAKSCLUSTER2_SECRET }}"
-          }
-        
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/main.bicep" `
           -resourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
+          -aks-cluster1ClientID "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}" `
+          -aks-cluster1Secret "${{ secrets.COOLAKSCLUSTER1_SECRET }}" `
+          -aks-cluster2ClientID "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}" `
+          -aks-cluster2Secret "${{ secrets.COOLAKSCLUSTER2_SECRET }}" `
           -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -TemplateParameterFile "json/aks.json" `
           -location "${{ env.Location }}" `
-          -tenantId "${{ secrets.AZURE_TENANT_ID }}" `
-          -TemplateParameterObject $parameters
+          -tenantId "${{ secrets.AZURE_TENANT_ID }}"
 
   # Disable QA and PROD jobs for now
   # qa:
