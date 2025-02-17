@@ -61,6 +61,13 @@ jobs:
     - name: Deploy Bicep
       shell: pwsh
       run: |
+        $parameters = @{
+            clientId1 = "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}"
+            clientSecret1 = "${{ secrets.COOLAKSCLUSTER1_SECRET }}"
+            clientId2 = "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}"
+            clientSecret2 = "${{ secrets.COOLAKSCLUSTER2_SECRET }}"
+          }
+        
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/main.bicep" `
           -resourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
@@ -68,12 +75,7 @@ jobs:
           -TemplateParameterFile "json/aks.json" `
           -location "${{ env.Location }}" `
           -tenantId "${{ secrets.AZURE_TENANT_ID }}" `
-          -parameters @{
-              clientId1 = "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}"
-              clientSecret1 = "${{ secrets.COOLAKSCLUSTER1_SECRET }}"
-              clientId2 = "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}"
-              clientSecret2 = "${{ secrets.COOLAKSCLUSTER2_SECRET }}"
-          }
+          -TemplateParameterObject $parameters
 
   # Disable QA and PROD jobs for now
   # qa:
