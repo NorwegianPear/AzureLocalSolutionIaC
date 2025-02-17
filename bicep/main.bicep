@@ -54,7 +54,7 @@ param resourceGroupName string?
 param aksCluster1ClientID string?
 
 @secure()
-param aksCluster1ClientSecret string
+param aksCluster1ClientSecret string?
 
 @secure()
 param aksCluster2ClientID string?
