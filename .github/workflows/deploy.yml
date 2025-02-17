@@ -66,9 +66,9 @@ jobs:
       shell: pwsh
       run: |
         $aksCluster1ClientID = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}" -AsPlainText -Force
-        $aksCluster1Secret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER1_SECRET }}" -AsPlainText -Force
+        $aksCluster1ClientSecret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER1_SECRET }}" -AsPlainText -Force
         $aksCluster2ClientID = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}" -AsPlainText -Force
-        $aksCluster2Secret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2_SECRET }}" -AsPlainText -Force
+        $aksCluster2ClientSecret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2_SECRET }}" -AsPlainText -Force
 
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/main.bicep" `
@@ -78,7 +78,7 @@ jobs:
           -Location "${{ env.Location }}" `
           -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
           -aksCluster1ClientID $aksCluster1ClientID `
-          -aksCluster1Secret $aksCluster1Secret `
+          -aksCluster1ClientSecret $aksCluster1ClientSecret `
           -aksCluster2ClientID $aksCluster2ClientID `
-          -aksCluster2Secret $aksCluster2Secret
+          -aksCluster2ClientSecret $aksCluster2ClientSecret
 
