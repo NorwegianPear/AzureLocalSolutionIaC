@@ -72,7 +72,7 @@ jobs:
 
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/main.bicep" `
-          -ResourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
+          -resourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
           -SubscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -TemplateParameterFile "json/aks.json" `
           -Location "${{ env.Location }}" `
