@@ -11,7 +11,7 @@
         "environmentTypeLowerCase": {
             "value": "dev"
         },
-        "ResourceGroupname": {
+        "resourceGroupName": {
             "value": "wms-avd-rg"
         },
         "avd": {
