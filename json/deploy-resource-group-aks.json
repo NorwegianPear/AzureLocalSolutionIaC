@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "norwayeast"
+        },
+        "environmentType": {
+            "value": "DEV"
+        },
+        "environmentTypeLowerCase": {
+            "value": "dev"
+        },
+        "resourceGroupName": {
+            "value": "aks-kubernetes-arc-rg"
+        },
+        "tags": {
+            "value": {
+                "deployedBy": "Uy Le Thai Phan",
+                "Service": "Azure Kubernetes Service",
+                "Project": "AzureLocalSolutionIaC",
+                "Solution": "Repository",
+                "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
+            }
+        }
+    }
+}

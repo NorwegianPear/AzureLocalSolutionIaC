@@ -130,6 +130,7 @@
         },
         "tags": {
             "value": {
+                "deployedBy": "Uy Le Thai Phan",
                 "Service": "Azure Kubernetes Service",
                 "Project": "AzureLocalSolutionIaC",
                 "Solution": "Repository",

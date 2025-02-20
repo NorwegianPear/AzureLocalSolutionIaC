@@ -20,6 +20,7 @@ env:
   Subscription: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   Location: 'norwayeast'
   aks-resourceGroupName: 'aks-kubernetes-arc-rg'
+  avd-resourceGroupName: 'avd-resource-group'
   KeyVaultName: '-kv'
   aksCluster1ClientID: ${{ secrets.COOLAKSCLUSTER1_CLIENTID }}
   aksCluster1Secret: ${{ secrets.COOLAKSCLUSTER1_SECRET }}
@@ -62,7 +63,29 @@ jobs:
         Install-Module -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Force
         Install-Module Az.KeyVault -Repository PSGallery -Force
 
-    - name: Deploy Bicep
+    - name: Deploy Resource Group for AKS
+      shell: pwsh
+      run: |
+        New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
+          -TemplateFile "bicep/resourcegroup.bicep" `
+          -resourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
+          -SubscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
+          -TemplateParameterFile "json/deploy-resource-group-aks.json" `
+          -Location "${{ env.Location }}" `
+          -TenantId "${{ secrets.AZURE_TENANT_ID }}"
+
+    - name: Deploy Resource Group for AVD
+      shell: pwsh
+      run: |
+        New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
+          -TemplateFile "bicep/resourcegroup.bicep" `
+          -resourceGroupName "${{ env.avd-resourceGroupName }}-${{ env.environmentName }}" `
+          -SubscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
+          -TemplateParameterFile "json/deploy-resource-group-avd.json" `
+          -Location "${{ env.Location }}" `
+          -TenantId "${{ secrets.AZURE_TENANT_ID }}"
+
+    - name: Deploy Bicep for AKS
       shell: pwsh
       run: |
         $aksCluster1ClientID = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}" -AsPlainText -Force
