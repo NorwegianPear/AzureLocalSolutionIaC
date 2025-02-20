@@ -85,6 +85,27 @@ jobs:
           -Location "${{ env.Location }}" `
           -TenantId "${{ secrets.AZURE_TENANT_ID }}"
 
+    - name: Generate SSH Key Pair using Azure CLI
+      run: |
+        az sshkey create --name "mySSHKey" --resource-group "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}"
+        az sshkey show --name "mySSHKey" --resource-group "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" --query publicKey -o tsv > mySSHKey.pub
+        az sshkey show --name "mySSHKey" --resource-group "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" --query privateKey -o tsv > mySSHKey
+
+    - name: Generate SSH Key Pair using ssh-keygen
+      run: |
+        ssh-keygen -t rsa -b 4096 -f mySSHKey -N ""
+        cat mySSHKey.pub
+
+    - name: Store SSH Private Key in Secrets
+      run: |
+        echo "::add-mask::$(cat mySSHKey)"
+        echo "$(cat mySSHKey)" | gh secret set SSH_PRIVATE_KEY
+
+    - name: Store SSH Public Key in Secrets
+      run: |
+        echo "::add-mask::$(cat mySSHKey.pub)"
+        echo "$(cat mySSHKey.pub)" | gh secret set SSH_PUBLIC_KEY
+
     - name: Deploy Bicep for AKS
       shell: pwsh
       run: |
