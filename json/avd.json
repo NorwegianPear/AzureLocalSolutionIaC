@@ -46,6 +46,8 @@
         },
         "tags": {
             "value": {
+                "Service": "Azure Virtual Desktop",
+                "Project": "AzureLocalSolutionIaC",
                 "Solution": "Repository",
                 "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
             }

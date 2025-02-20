@@ -14,30 +14,6 @@
         "resourceGroupName": {
             "value": "aks-kubernetes-arc-rg"
         },
-        "kubernetesApplications": {
-            "value": [
-                {
-                    "name": "myK8sApp",
-                    "namespace": "default",
-                    "replicas": 3,
-                    "image": "nginx:latest"
-                }
-            ]
-        },
-        "arcEnabledServices": {
-            "value": [
-                {
-                    "name": "arcService1",
-                    "type": "PostgreSQL",
-                    "version": "12"
-                },
-                {
-                    "name": "arcService2",
-                    "type": "SQLManagedInstance",
-                    "version": "2019"
-                }
-            ]
-        },
         "aksClusters": {
             "value": [
                 {
@@ -59,7 +35,33 @@
                     },
                     "storageProfile": {
                         "storageAccountName": "storageaccount1"
-                    }
+                    },
+                    "arcEnabledServices": [
+                        {
+                            "name": "arcService1",
+                            "type": "PostgreSQL",
+                            "version": "12"
+                        },
+                        {
+                            "name": "arcService2",
+                            "type": "SQLManagedInstance",
+                            "version": "2019"
+                        }
+                    ],
+                    "kubernetesApplications": [
+                        {
+                            "name": "myK8sApp1",
+                            "namespace": "default",
+                            "replicas": 3,
+                            "image": "nginx:latest"
+                        },
+                        {
+                            "name": "myK8sApp2",
+                            "namespace": "default",
+                            "replicas": 2,
+                            "image": "mysql:5.7"
+                        }
+                    ]
                 },
                 {
                     "name": "coolAksCluster2",
@@ -80,7 +82,33 @@
                     },
                     "storageProfile": {
                         "storageAccountName": "storageaccount2"
-                    }
+                    },
+                    "arcEnabledServices": [
+                        {
+                            "name": "arcService3",
+                            "type": "MySQL",
+                            "version": "8"
+                        },
+                        {
+                            "name": "arcService4",
+                            "type": "MongoDB",
+                            "version": "4.4"
+                        }
+                    ],
+                    "kubernetesApplications": [
+                        {
+                            "name": "myK8sApp3",
+                            "namespace": "default",
+                            "replicas": 2,
+                            "image": "nginx:latest"
+                        },
+                        {
+                            "name": "myK8sApp4",
+                            "namespace": "default",
+                            "replicas": 1,
+                            "image": "redis:latest"
+                        }
+                    ]
                 }
             ]
         },
@@ -102,6 +130,8 @@
         },
         "tags": {
             "value": {
+                "Service": "Azure Kubernetes Service",
+                "Project": "AzureLocalSolutionIaC",
                 "Solution": "Repository",
                 "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
             }

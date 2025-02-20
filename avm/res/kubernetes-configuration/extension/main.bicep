@@ -35,8 +35,11 @@ param targetNamespace string?
 @description('Optional. Version of the extension for this extension, if it is "pinned" to a specific version.')
 param version string?
 
-@description('Optional. A list of flux configuraitons.')
+@description('Optional. A list of flux configurations.')
 param fluxConfigurations array?
+
+@description('Optional. A list of Arc-enabled services.')
+param arcEnabledServices array
 
 #disable-next-line no-deployments-resources
 resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableTelemetry) {
@@ -107,6 +110,61 @@ module fluxConfiguration 'br/public:avm/res/kubernetes-configuration/flux-config
     ]
   }
 ]
+
+resource arcServices 'Microsoft.KubernetesConfiguration/extensions@2021-09-01' = [for (service, i) in (arcEnabledServices ?? []): {
+  name: '${name}-${i}'
+  scope: managedCluster
+  
+  properties: {
+    
+    extensionType: service.type
+    version: service.version
+    scope: {
+      cluster: {
+        releaseNamespace: 'default'
+      }
+    }
+  }
+}]
+// Enable Azure Arc on the AKS clusters
+resource arcKubernetesCluster 'Microsoft.Kubernetes/connectedClusters@2021-10-01' = [for (service, i) in arcEnabledServices: {
+  name: '${name}-${i}'
+  identity: {
+    type:'SystemAssigned'
+  }
+  location: location
+  properties: {
+    agentPublicKeyCertificate: service.agentPublicKeyCertificate
+    //kubernetesVersion: service.kubernetesVersion
+    //dnsPrefix: service.dnsPrefix
+    //agentPoolProfiles: service.agentPools
+  }
+  dependsOn: [
+    managedCluster
+  ]
+}]
+
+param kubernetesApplications array
+
+resource k8sApplications 'Microsoft.KubernetesConfiguration/extensions@2021-09-01' = [for (app, i) in kubernetesApplications: {
+  name: '${name}-${app.name}'
+  scope: managedCluster
+  properties: {
+    extensionType: 'k8sApplication'
+    version: '1.0'
+    scope: {
+      cluster: {
+        releaseNamespace: app.namespace
+      }
+    }
+    configurationSettings: {
+      replicas: app.replicas
+      image: app.image
+    }
+  }
+}]
+
+
 
 @description('The name of the extension.')
 output name string = extension.name

@@ -62,7 +62,6 @@ param aksCluster2ClientID string?
 @secure()
 param aksCluster2ClientSecret string?
 
-
 var aksClusterconfigs = [for (aksCluster, i) in aksClusters: union({
   name: '${subscriptionPrefix}${aksCluster.name}-${environmentType}'
   location: location
@@ -77,14 +76,6 @@ var aksClusterconfigs = [for (aksCluster, i) in aksClusters: union({
   }
 }, aksCluster)]
 
-var storageAccountsconfigs = [for (storageAccount, i) in storageAccounts: union({
-  name: '${subscriptionPrefix}${storageAccount.name}-${environmentType}'
-  location: location
-  skuName: 'Standard_LRS'
-  kind: 'StorageV2'
-  tags: tags
-}, storageAccount)]
-
 module aksCluster '../avm/res/container-service/managed-cluster/main.bicep' = [for (aksCluster, i) in aksClusterconfigs: {
   name: '${uniqueString(deployment().name, aksCluster.name)}-aks'
   scope: resourceGroup('${resourceGroupName}-${environmentTypeLowerCase}')
@@ -98,8 +89,18 @@ module aksCluster '../avm/res/container-service/managed-cluster/main.bicep' = [f
     tags: tags
     agentPools: aksCluster.agentPools
     aksServicePrincipalProfile: aksCluster.aksServicePrincipalProfile
+    arcEnabledServices: aksCluster.arcEnabledServices
+    kubernetesApplications: aksCluster.kubernetesApplications
   }
 }]
+
+var storageAccountsconfigs = [for (storageAccount, i) in storageAccounts: union({
+  name: '${subscriptionPrefix}${storageAccount.name}-${environmentType}'
+  location: location
+  skuName: 'Standard_LRS'
+  kind: 'StorageV2'
+  tags: tags
+}, storageAccount)]
 
 module storageAccount '../avm/res/storage/storage-account/main.bicep' = [for (storageAccount, i) in storageAccountsconfigs: {
   name: '${uniqueString(deployment().name, storageAccount.name)}-storage'
