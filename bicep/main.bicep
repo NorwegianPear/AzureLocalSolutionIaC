@@ -89,10 +89,26 @@ module aksCluster '../avm/res/container-service/managed-cluster/main.bicep' = [f
     tags: tags
     agentPools: aksCluster.agentPools
     aksServicePrincipalProfile: aksCluster.aksServicePrincipalProfile
-    arcEnabledServices: aksCluster.arcEnabledServices
-    kubernetesApplications: aksCluster.kubernetesApplications
+    //arcEnabledServices: aksCluster.arcEnabledServices
+    //kubernetesApplications: aksCluster.kubernetesApplications
   }
 }]
+
+module enablearc '../avm/res/container-service/managed-cluster/main.bicep' = [for (aksCluster, i) in aksClusterconfigs: {
+  name: '${uniqueString(deployment().name, aksCluster.name)}-arc'
+  scope: resourceGroup('${resourceGroupName}-${environmentTypeLowerCase}')
+  
+  params: {
+    name: aksCluster.name
+    location: location
+    tags: tags
+    kubernetesVersion: aksCluster.kubernetesVersion
+    dnsPrefix: aksCluster.dnsPrefix
+    agentPools: aksCluster.agentPools
+    primaryAgentPoolProfiles: aksCluster.primaryAgentPoolProfiles
+  }
+}]
+
 
 var storageAccountsconfigs = [for (storageAccount, i) in storageAccounts: union({
   name: '${subscriptionPrefix}${storageAccount.name}-${environmentType}'
