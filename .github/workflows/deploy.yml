@@ -69,10 +69,10 @@ jobs:
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/resourcegroup.bicep" `
           -resourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
-          -SubscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
+          -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -TemplateParameterFile "json/deploy-resource-group-aks.json" `
-          -Location "${{ env.Location }}" `
-          -TenantId "${{ secrets.AZURE_TENANT_ID }}"
+          -location "${{ env.Location }}" `
+          -tenantId "${{ secrets.AZURE_TENANT_ID }}"
 
     - name: Deploy Resource Group for AVD
       shell: pwsh
@@ -80,10 +80,10 @@ jobs:
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/resourcegroup.bicep" `
           -resourceGroupName "${{ env.avd-resourceGroupName }}-${{ env.environmentName }}" `
-          -SubscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
+          -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -TemplateParameterFile "json/deploy-resource-group-avd.json" `
-          -Location "${{ env.Location }}" `
-          -TenantId "${{ secrets.AZURE_TENANT_ID }}"
+          -location "${{ env.Location }}" `
+          -tenantId "${{ secrets.AZURE_TENANT_ID }}"
 
     - name: Generate SSH Key Pair using Azure CLI
       run: |
@@ -117,10 +117,10 @@ jobs:
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/main.bicep" `
           -resourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
-          -SubscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
+          -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -TemplateParameterFile "json/aks.json" `
-          -Location "${{ env.Location }}" `
-          -TenantId "${{ secrets.AZURE_TENANT_ID }}" `
+          -location "${{ env.Location }}" `
+          -tenantId "${{ secrets.AZURE_TENANT_ID }}" `
           -aksCluster1ClientID $aksCluster1ClientID `
           -aksCluster1ClientSecret $aksCluster1ClientSecret `
           -aksCluster2ClientID $aksCluster2ClientID `

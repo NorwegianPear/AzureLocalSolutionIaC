@@ -1,4 +1,6 @@
 targetScope = 'subscription'
+param subscriptionId string?
+param tenantId string?
 
 param location string
 param environmentType string
