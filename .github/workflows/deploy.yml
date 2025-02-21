@@ -26,6 +26,7 @@ env:
   aksCluster1Secret: ${{ secrets.COOLAKSCLUSTER1_SECRET }}
   aksCluster2ClientID: ${{ secrets.COOLAKSCLUSTER2_CLIENTID }}
   aksCluster2Secret: ${{ secrets.COOLAKSCLUSTER2_SECRET }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
 jobs:
   dev:
