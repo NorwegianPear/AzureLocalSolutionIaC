@@ -88,10 +88,9 @@ jobs:
     - name: Ensure SSH Keys for AKS and AVD
       shell: pwsh
       run: |
-        $sshKeyPathAks = "sshkey-aks-kubernetes-arc-rg-dev"
-        $sshKeyPathAvd = "sshkey-avd-resource-group-dev"
-        ssh-keygen -t rsa -b 4096 -f $sshKeyPathAks -N "" -q -y
-        ssh-keygen -t rsa -b 4096 -f $sshKeyPathAvd -N "" -q -y
+        # Create an SSH key pair using Azure CLI with overwrite flag
+        az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --location "norwayeast" --overwrite
+        az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --location "norwayeast" --overwrite
 
     - name: Store SSH Private Keys in Secrets for AKS and AVD
       shell: pwsh
