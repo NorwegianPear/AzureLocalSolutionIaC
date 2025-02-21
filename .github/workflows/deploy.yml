@@ -68,7 +68,7 @@ jobs:
       run: |
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/resourcegroup.bicep" `
-          -resourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
+          -resourceGroupName "${{ env.aks-resourceGroupName }}" `
           -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -TemplateParameterFile "json/deploy-resource-group-aks.json" `
           -location "${{ env.Location }}" `
@@ -79,7 +79,7 @@ jobs:
       run: |
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/resourcegroup.bicep" `
-          -resourceGroupName "${{ env.avd-resourceGroupName }}-${{ env.environmentName }}" `
+          -resourceGroupName "${{ env.avd-resourceGroupName }}" `
           -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -TemplateParameterFile "json/deploy-resource-group-avd.json" `
           -location "${{ env.Location }}" `
