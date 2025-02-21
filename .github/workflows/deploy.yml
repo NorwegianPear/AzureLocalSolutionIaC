@@ -89,11 +89,11 @@ jobs:
       shell: pwsh
       run: |
         # Delete existing SSH keys if they exist
-        if (az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" -o none) {
-          az sshkey delete --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --yes
+        if (az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --only-show-errors) {
+          az sshkey delete --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --only-show-errors
         }
-        if (az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" -o none) {
-          az sshkey delete --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --yes
+        if (az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --only-show-errors) {
+          az sshkey delete --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --only-show-errors
         }
 
         # Create an SSH key pair using Azure CLI
