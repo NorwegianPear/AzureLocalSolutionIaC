@@ -88,9 +88,17 @@ jobs:
     - name: Ensure SSH Keys for AKS and AVD
       shell: pwsh
       run: |
-        # Create an SSH key pair using Azure CLI with yes flag
-        az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --location "norwayeast" --yes
-        az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --location "norwayeast" --yes
+        # Delete existing SSH keys if they exist
+        if (az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" -o none) {
+          az sshkey delete --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --yes
+        }
+        if (az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" -o none) {
+          az sshkey delete --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --yes
+        }
+
+        # Create an SSH key pair using Azure CLI
+        az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --location "norwayeast"
+        az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --location "norwayeast"
 
     - name: Store SSH Private Keys in Secrets for AKS and AVD
       shell: pwsh
