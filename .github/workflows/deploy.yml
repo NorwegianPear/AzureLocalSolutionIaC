@@ -88,25 +88,19 @@ jobs:
     - name: Ensure SSH Keys for AKS and AVD
       shell: pwsh
       run: |
-        # Delete existing SSH keys if they exist
-        $aksKeyExists = az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.aks-resourceGroupName }}-${{env.environmentName}}" --query "name" -o tsv
-        if ($aksKeyExists) {
-          az sshkey delete --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.aks-resourceGroupName }}-${{env.environmentName}}" --yes
-        }
-        $avdKeyExists = az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --query "name" -o tsv
-        if ($avdKeyExists) {
-          az sshkey delete --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --yes
-        }
+        # Generate SSH keys locally
+        ssh-keygen -t rsa -b 2048 -f $HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev -N ""
+        ssh-keygen -t rsa -b 2048 -f $HOME/.ssh/sshkey-avd-resource-group-dev -N ""
 
-        # Create an SSH key pair using Azure CLI
-        az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.aks-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast"
-        az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast"
+        # Upload SSH keys to Azure
+        az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.aks-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast" --public-key "@$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub"
+        az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast" --public-key "@$HOME/.ssh/sshkey-avd-resource-group-dev.pub"
 
     - name: Store SSH Private Keys in Secrets for AKS and AVD
       shell: pwsh
       run: |
-        $sshKeyPathAks = "sshkey-aks-kubernetes-arc-rg-dev"
-        $sshKeyPathAvd = "sshkey-avd-resource-group-dev"
+        $sshKeyPathAks = "$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev"
+        $sshKeyPathAvd = "$HOME/.ssh/sshkey-avd-resource-group-dev"
         $privateKeyAks = Get-Content -Raw -Path $sshKeyPathAks
         $privateKeyAvd = Get-Content -Raw -Path $sshKeyPathAvd
         echo "::add-mask::$privateKeyAks"
@@ -117,8 +111,8 @@ jobs:
     - name: Store SSH Public Keys in Secrets for AKS and AVD
       shell: pwsh
       run: |
-        $sshKeyPathAksPub = "sshkey-aks-kubernetes-arc-rg-dev.pub"
-        $sshKeyPathAvdPub = "sshkey-avd-resource-group-dev.pub"
+        $sshKeyPathAksPub = "$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub"
+        $sshKeyPathAvdPub = "$HOME/.ssh/sshkey-avd-resource-group-dev.pub"
         $publicKeyAks = Get-Content -Raw -Path $sshKeyPathAksPub
         $publicKeyAvd = Get-Content -Raw -Path $sshKeyPathAvdPub
         echo "::add-mask::$publicKeyAks"
