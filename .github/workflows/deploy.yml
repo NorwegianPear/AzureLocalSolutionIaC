@@ -103,7 +103,28 @@ jobs:
         echo "$(cat sshkey-aks-kubernetes-arc-rg-dev.pub)" | gh secret set SSH_PUBLIC_KEY_AKS --body -
         echo "::add-mask::$(cat sshkey-avd-resource-group-dev.pub)"
         echo "$(cat sshkey-avd-resource-group-dev.pub)" | gh secret set SSH_PUBLIC_KEY_AVD --body -
-  
+
+    - name: Deploy Azure Local and Connect On-Prem
+      shell: pwsh
+      run: |
+        $resourceGroupName = "aks-kubernetes-arc-rg-dev"
+        $location = "norwayeast"
+        $machineName = "PCNOR262914"
+
+        # Install Azure PowerShell
+        Install-Module -Name Az -AllowClobber -Scope CurrentUser
+
+        # Login to Azure
+        Connect-AzAccount
+
+        # Create Resource Group
+        New-AzResourceGroup -Name $resourceGroupName -Location $location
+
+        # Install the Connected Machine Agent
+        Install-Module -Name Az.ConnectedMachine
+
+        # Register the Machine with Azure Arc
+        Connect-AzConnectedMachine -ResourceGroupName $resourceGroupName -Name $machineName -Location $location
 
     - name: Deploy Bicep for AKS
       shell: pwsh
