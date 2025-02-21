@@ -85,26 +85,48 @@ jobs:
           -location "${{ env.Location }}" `
           -tenantId "${{ secrets.AZURE_TENANT_ID }}"
 
-    - name: Generate SSH Key Pair using Azure CLI
+    - name: Check if SSH Keys Exist for AKS and AVD
+      id: check-keys
       run: |
-        az sshkey create --name "mySSHKey" --resource-group "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}"
-        az sshkey show --name "mySSHKey" --resource-group "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" --query publicKey -o tsv > mySSHKey.pub
-        az sshkey show --name "mySSHKey" --resource-group "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" --query privateKey -o tsv > mySSHKey
+        az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" || echo "Key does not exist" > aks_key_status.txt
+        az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-dev" || echo "Key does not exist" > avd_key_status.txt
 
-    - name: Generate SSH Key Pair using ssh-keygen
+    - name: Create SSH Keys if Not Exist for AKS and AVD
       run: |
-        ssh-keygen -t rsa -b 4096 -f mySSHKey -N ""
-        cat mySSHKey.pub
+        if grep -q 'Key does not exist' aks_key_status.txt; then
+          az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev"
+        fi
+        if grep -q 'Key does not exist' avd_key_status.txt; then
+          az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-dev"
+        fi
 
-    - name: Store SSH Private Key in Secrets
+    - name: Retrieve SSH Public and Private Keys for AKS and AVD
       run: |
-        echo "::add-mask::$(cat mySSHKey)"
-        echo "$(cat mySSHKey)" | gh secret set SSH_PRIVATE_KEY
+        az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --query publicKey -o tsv > sshkey-aks-kubernetes-arc-rg-dev.pub
+        az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --query privateKey -o tsv > sshkey-aks-kubernetes-arc-rg-dev
+        az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-dev" --query publicKey -o tsv > sshkey-avd-resource-group-dev.pub
+        az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-dev" --query privateKey -o tsv > sshkey-avd-resource-group-dev
 
-    - name: Store SSH Public Key in Secrets
+    - name: Store SSH Private Keys in Secrets for AKS and AVD
       run: |
-        echo "::add-mask::$(cat mySSHKey.pub)"
-        echo "$(cat mySSHKey.pub)" | gh secret set SSH_PUBLIC_KEY
+        echo "::add-mask::$(cat sshkey-aks-kubernetes-arc-rg-dev)"
+        echo "$(cat sshkey-aks-kubernetes-arc-rg-dev)" | gh secret set SSH_PRIVATE_KEY_AKS
+        echo "::add-mask::$(cat sshkey-avd-resource-group-dev)"
+        echo "$(cat sshkey-avd-resource-group-dev)" | gh secret set SSH_PRIVATE_KEY_AVD
+
+    - name: Store SSH Public Keys in Secrets for AKS and AVD
+      run: |
+        echo "::add-mask::$(cat sshkey-aks-kubernetes-arc-rg-dev.pub)"
+        echo "$(cat sshkey-aks-kubernetes-arc-rg-dev.pub)" | gh secret set SSH_PUBLIC_KEY_AKS
+        echo "::add-mask::$(cat sshkey-avd-resource-group-dev.pub)"
+        echo "$(cat sshkey-avd-resource-group-dev.pub)" | gh secret set SSH_PUBLIC_KEY_AVD
+
+    - name: Force Overwrite SSH Key Pair using ssh-keygen for AKS and AVD
+      run: |
+        ssh-keygen -t rsa -b 4096 -f sshkey-aks-kubernetes-arc-rg-dev -N "" -y
+        ssh-keygen -t rsa -b 4096 -f sshkey-avd-resource-group-dev -N "" -y
+        cat sshkey-aks-kubernetes-arc-rg-dev.pub
+        cat sshkey-avd-resource-group-dev.pub
 
     - name: Deploy Bicep for AKS
       shell: pwsh

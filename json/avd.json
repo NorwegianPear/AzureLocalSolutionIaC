@@ -46,6 +46,7 @@
         },
         "tags": {
             "value": {
+                "deployedBy": "Uy Le Thai Phan",
                 "Service": "Azure Virtual Desktop",
                 "Project": "AzureLocalSolutionIaC",
                 "Solution": "Repository",
