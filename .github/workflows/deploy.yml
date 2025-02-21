@@ -89,16 +89,16 @@ jobs:
       shell: pwsh
       run: |
         # Delete existing SSH keys if they exist
-        if (az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --only-show-errors) {
-          az sshkey delete --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --only-show-errors
+        if (az sshkey show --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --only-show-errors) {
+          az sshkey delete --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.aks-resourceGroupName }}-${{env.environmentName}}" --only-show-errors
         }
-        if (az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --only-show-errors) {
-          az sshkey delete --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --only-show-errors
+        if (az sshkey show --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --only-show-errors) {
+          az sshkey delete --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --only-show-errors
         }
 
         # Create an SSH key pair using Azure CLI
-        az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "aks-kubernetes-arc-rg-dev" --location "norwayeast"
-        az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "avd-resource-group" --location "norwayeast"
+        az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.aks-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast"
+        az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast"
 
     - name: Store SSH Private Keys in Secrets for AKS and AVD
       shell: pwsh
