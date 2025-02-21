@@ -86,23 +86,36 @@ jobs:
           -tenantId "${{ secrets.AZURE_TENANT_ID }}"
 
     - name: Ensure SSH Keys for AKS and AVD
+      shell: pwsh
       run: |
-        ssh-keygen -t rsa -b 4096 -f sshkey-aks-kubernetes-arc-rg-dev -N "" -y
-        ssh-keygen -t rsa -b 4096 -f sshkey-avd-resource-group-dev -N "" -y
+        $sshKeyPathAks = "sshkey-aks-kubernetes-arc-rg-dev"
+        $sshKeyPathAvd = "sshkey-avd-resource-group-dev"
+        ssh-keygen -t rsa -b 4096 -f $sshKeyPathAks -N "" -q -y
+        ssh-keygen -t rsa -b 4096 -f $sshKeyPathAvd -N "" -q -y
 
     - name: Store SSH Private Keys in Secrets for AKS and AVD
+      shell: pwsh
       run: |
-        echo "::add-mask::$(cat sshkey-aks-kubernetes-arc-rg-dev)"
-        echo "$(cat sshkey-aks-kubernetes-arc-rg-dev)" | gh secret set SSH_PRIVATE_KEY_AKS --body -
-        echo "::add-mask::$(cat sshkey-avd-resource-group-dev)"
-        echo "$(cat sshkey-avd-resource-group-dev)" | gh secret set SSH_PRIVATE_KEY_AVD --body -
+        $sshKeyPathAks = "sshkey-aks-kubernetes-arc-rg-dev"
+        $sshKeyPathAvd = "sshkey-avd-resource-group-dev"
+        $privateKeyAks = Get-Content -Raw -Path $sshKeyPathAks
+        $privateKeyAvd = Get-Content -Raw -Path $sshKeyPathAvd
+        echo "::add-mask::$privateKeyAks"
+        echo $privateKeyAks | gh secret set SSH_PRIVATE_KEY_AKS --body -
+        echo "::add-mask::$privateKeyAvd"
+        echo $privateKeyAvd | gh secret set SSH_PRIVATE_KEY_AVD --body -
 
     - name: Store SSH Public Keys in Secrets for AKS and AVD
+      shell: pwsh
       run: |
-        echo "::add-mask::$(cat sshkey-aks-kubernetes-arc-rg-dev.pub)"
-        echo "$(cat sshkey-aks-kubernetes-arc-rg-dev.pub)" | gh secret set SSH_PUBLIC_KEY_AKS --body -
-        echo "::add-mask::$(cat sshkey-avd-resource-group-dev.pub)"
-        echo "$(cat sshkey-avd-resource-group-dev.pub)" | gh secret set SSH_PUBLIC_KEY_AVD --body -
+        $sshKeyPathAksPub = "sshkey-aks-kubernetes-arc-rg-dev.pub"
+        $sshKeyPathAvdPub = "sshkey-avd-resource-group-dev.pub"
+        $publicKeyAks = Get-Content -Raw -Path $sshKeyPathAksPub
+        $publicKeyAvd = Get-Content -Raw -Path $sshKeyPathAvdPub
+        echo "::add-mask::$publicKeyAks"
+        echo $publicKeyAks | gh secret set SSH_PUBLIC_KEY_AKS --body -
+        echo "::add-mask::$publicKeyAvd"
+        echo $publicKeyAvd | gh secret set SSH_PUBLIC_KEY_AVD --body -
 
     - name: Deploy Azure Local and Connect On-Prem
       shell: pwsh
