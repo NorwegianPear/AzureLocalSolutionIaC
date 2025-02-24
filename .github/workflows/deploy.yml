@@ -41,7 +41,7 @@ jobs:
     - name: Install Azure module to resolve Token issue
       uses: ./.github/actions/az-install
       with:
-        version: 11.6.0          # This version of PS remediates the OIDC token expiry issue - #10249
+        version: 13.2.0          # This version of PS remediates the OIDC token expiry issue - #10249
 
     - name: 🥳 Connect to Azure
       id: azure-login
@@ -98,6 +98,8 @@ jobs:
 
     - name: Store SSH Private Keys in Secrets for AKS and AVD
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $privateKeyAks = Get-Content -Raw -Path "$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev"
         $privateKeyAvd = Get-Content -Raw -Path "$HOME/.ssh/sshkey-avd-resource-group-dev"
@@ -108,6 +110,8 @@ jobs:
 
     - name: Store SSH Public Keys in Secrets for AKS and AVD
       shell: pwsh
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         $publicKeyAks = Get-Content -Raw -Path "$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub"
         $publicKeyAvd = Get-Content -Raw -Path "$HOME/.ssh/sshkey-avd-resource-group-dev.pub"
