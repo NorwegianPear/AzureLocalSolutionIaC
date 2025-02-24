@@ -97,28 +97,42 @@ jobs:
         az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast" --public-key "@$HOME/.ssh/sshkey-avd-resource-group-dev.pub"
 
     - name: Store SSH Private Keys in Secrets for AKS and AVD
-      shell: pwsh
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        $privateKeyAks = Get-Content -Raw -Path "$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev"
-        $privateKeyAvd = Get-Content -Raw -Path "$HOME/.ssh/sshkey-avd-resource-group-dev"
-        echo "::add-mask::$privateKeyAks"
-        echo $privateKeyAks | gh secret set SSH_PRIVATE_KEY_AKS --body -
-        echo "::add-mask::$privateKeyAvd"
-        echo $privateKeyAvd | gh secret set SSH_PRIVATE_KEY_AVD --body -
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const privateKeyAks = require('fs').readFileSync('$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev', 'utf8');
+          const privateKeyAvd = require('fs').readFileSync('$HOME/.ssh/sshkey-avd-resource-group-dev', 'utf8');
+          await github.actions.createOrUpdateRepoSecret({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            secret_name: 'SSH_PRIVATE_KEY_AKS',
+            encrypted_value: privateKeyAks
+          });
+          await github.actions.createOrUpdateRepoSecret({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            secret_name: 'SSH_PRIVATE_KEY_AVD',
+            encrypted_value: privateKeyAvd
+          });
 
     - name: Store SSH Public Keys in Secrets for AKS and AVD
-      shell: pwsh
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        $publicKeyAks = Get-Content -Raw -Path "$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub"
-        $publicKeyAvd = Get-Content -Raw -Path "$HOME/.ssh/sshkey-avd-resource-group-dev.pub"
-        echo "::add-mask::$publicKeyAks"
-        echo $publicKeyAks | gh secret set SSH_PUBLIC_KEY_AKS --body -
-        echo "::add-mask::$publicKeyAvd"
-        echo $publicKeyAvd | gh secret set SSH_PUBLIC_KEY_AVD --body -
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const publicKeyAks = require('fs').readFileSync('$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub', 'utf8');
+          const publicKeyAvd = require('fs').readFileSync('$HOME/.ssh/sshkey-avd-resource-group-dev.pub', 'utf8');
+          await github.actions.createOrUpdateRepoSecret({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            secret_name: 'SSH_PUBLIC_KEY_AKS',
+            encrypted_value: publicKeyAks
+          });
+          await github.actions.createOrUpdateRepoSecret({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            secret_name: 'SSH_PUBLIC_KEY_AVD',
+            encrypted_value: publicKeyAvd
+          });
 
     - name: Deploy Azure Local and Connect On-Prem
       shell: pwsh
