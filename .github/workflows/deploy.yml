@@ -106,7 +106,7 @@ jobs:
           const privateKeyAvd = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-avd-resource-group-dev', 'utf8');
           const owner = context.repo.owner;
           const repo = context.repo.repo;
-          const publicKey = await github.actions.getRepoPublicKey({
+          const publicKey = await github.rest.actions.getRepoPublicKey({
             owner,
             repo
           });
@@ -120,14 +120,14 @@ jobs:
           };
           const encryptedPrivateKeyAks = encrypt(privateKeyAks);
           const encryptedPrivateKeyAvd = encrypt(privateKeyAvd);
-          await github.actions.createOrUpdateRepoSecret({
+          await github.rest.actions.createOrUpdateRepoSecret({
             owner,
             repo,
             secret_name: 'SSH_PRIVATE_KEY_AKS',
             encrypted_value: encryptedPrivateKeyAks,
             key_id
           });
-          await github.actions.createOrUpdateRepoSecret({
+          await github.rest.actions.createOrUpdateRepoSecret({
             owner,
             repo,
             secret_name: 'SSH_PRIVATE_KEY_AVD',
@@ -145,7 +145,7 @@ jobs:
           const publicKeyAvd = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-avd-resource-group-dev.pub', 'utf8');
           const owner = context.repo.owner;
           const repo = context.repo.repo;
-          const publicKey = await github.actions.getRepoPublicKey({
+          const publicKey = await github.rest.actions.getRepoPublicKey({
             owner,
             repo
           });
@@ -159,14 +159,14 @@ jobs:
           };
           const encryptedPublicKeyAks = encrypt(publicKeyAks);
           const encryptedPublicKeyAvd = encrypt(publicKeyAvd);
-          await github.actions.createOrUpdateRepoSecret({
+          await github.rest.actions.createOrUpdateRepoSecret({
             owner,
             repo,
             secret_name: 'SSH_PUBLIC_KEY_AKS',
             encrypted_value: encryptedPublicKeyAks,
             key_id
           });
-          await github.actions.createOrUpdateRepoSecret({
+          await github.rest.actions.createOrUpdateRepoSecret({
             owner,
             repo,
             secret_name: 'SSH_PUBLIC_KEY_AVD',
