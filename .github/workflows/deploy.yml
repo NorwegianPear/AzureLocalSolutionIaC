@@ -21,7 +21,8 @@ env:
   Location: 'norwayeast'
   aks-resourceGroupName: 'aks-kubernetes-arc-rg'
   avd-resourceGroupName: 'avd-resource-group'
-  KeyVaultName: '-kv'
+  aksKeyVaultName: 'aks-keyvault'
+  avdKeyVaultName: 'avd-keyvault'
   aksCluster1ClientID: ${{ secrets.COOLAKSCLUSTER1_CLIENTID }}
   aksCluster1Secret: ${{ secrets.COOLAKSCLUSTER1_SECRET }}
   aksCluster2ClientID: ${{ secrets.COOLAKSCLUSTER2_CLIENTID }}
@@ -85,7 +86,16 @@ jobs:
           -location "${{ env.Location }}" `
           -tenantId "${{ secrets.AZURE_TENANT_ID }}"
 
-    - name: Ensure SSH Keys for AKS and AVD
+    - name: Create Key Vaults for AKS and AVD
+      shell: pwsh
+      run: |
+        # Create Key Vault for AKS
+        New-AzKeyVault -ResourceGroupName "${{ env.aks-resourceGroupName }}" -VaultName "${{ env.aksKeyVaultName }}" -Location "${{ env.Location }}" -Sku Standard
+
+        # Create Key Vault for AVD
+        New-AzKeyVault -ResourceGroupName "${{ env.avd-resourceGroupName }}" -VaultName "${{ env.avdKeyVaultName }}" -Location "${{ env.Location }}" -Sku Standard
+
+    - name: Generate and Store SSH Keys in Key Vaults for AKS and AVD
       shell: pwsh
       run: |
         $sshDir = "$env:HOME/.ssh"
@@ -93,50 +103,20 @@ jobs:
           New-Item -ItemType Directory -Force -Path $sshDir
         }
         # Generate SSH keys locally
-        ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev -N ""
-        ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/sshkey-avd-resource-group-dev -N ""
+        ssh-keygen -t rsa -b 4096 -f "$sshDir/sshkey-aks-kubernetes-arc-rg-dev" -N ""
+        ssh-keygen -t rsa -b 4096 -f "$sshDir/sshkey-avd-resource-group-dev" -N ""
 
-        # Upload SSH keys to Azure
-        az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.aks-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast" --public-key "@$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub"
-        az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast" --public-key "@$HOME/.ssh/sshkey-avd-resource-group-dev.pub"
+        # Store SSH private keys in Key Vaults
+        $privateKeyAks = Get-Content -Raw -Path "$sshDir/sshkey-aks-kubernetes-arc-rg-dev"
+        $privateKeyAvd = Get-Content -Raw -Path "$sshDir/sshkey-avd-resource-group-dev"
+        Set-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}" -Name "SSHPrivateKeyAks" -SecretValue (ConvertTo-SecureString -String $privateKeyAks -AsPlainText -Force)
+        Set-AzKeyVaultSecret -VaultName "${{ env.avdKeyVaultName }}" -Name "SSHPrivateKeyAvd" -SecretValue (ConvertTo-SecureString -String $privateKeyAvd -AsPlainText -Force)
 
-    - name: Store SSH Private Keys in Secrets for AKS and AVD
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const privateKeyAks = require('fs').readFileSync('$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev', 'utf8');
-          const privateKeyAvd = require('fs').readFileSync('$HOME/.ssh/sshkey-avd-resource-group-dev', 'utf8');
-          await github.actions.createOrUpdateRepoSecret({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            secret_name: 'SSH_PRIVATE_KEY_AKS',
-            encrypted_value: privateKeyAks
-          });
-          await github.actions.createOrUpdateRepoSecret({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            secret_name: 'SSH_PRIVATE_KEY_AVD',
-            encrypted_value: privateKeyAvd
-          });
-
-    - name: Store SSH Public Keys in Secrets for AKS and AVD
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const publicKeyAks = require('fs').readFileSync('$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub', 'utf8');
-          const publicKeyAvd = require('fs').readFileSync('$HOME/.ssh/sshkey-avd-resource-group-dev.pub', 'utf8');
-          await github.actions.createOrUpdateRepoSecret({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            secret_name: 'SSH_PUBLIC_KEY_AKS',
-            encrypted_value: publicKeyAks
-          });
-          await github.actions.createOrUpdateRepoSecret({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            secret_name: 'SSH_PUBLIC_KEY_AVD',
-            encrypted_value: publicKeyAvd
-          });
+        # Store SSH public keys in Key Vaults
+        $publicKeyAks = Get-Content -Raw -Path "$sshDir/sshkey-aks-kubernetes-arc-rg-dev.pub"
+        $publicKeyAvd = Get-Content -Raw -Path "$sshDir/sshkey-avd-resource-group-dev.pub"
+        Set-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}" -Name "SSHPublicKeyAks" -SecretValue (ConvertTo-SecureString -String $publicKeyAks -AsPlainText -Force)
+        Set-AzKeyVaultSecret -VaultName "${{ env.avdKeyVaultName }}" -Name "SSHPublicKeyAvd" -SecretValue (ConvertTo-SecureString -String $publicKeyAvd -AsPlainText -Force)
 
     - name: Deploy Azure Local and Connect On-Prem
       shell: pwsh
