@@ -88,6 +88,10 @@ jobs:
     - name: Ensure SSH Keys for AKS and AVD
       shell: pwsh
       run: |
+        $sshDir = "$env:HOME/.ssh"
+        if (-Not (Test-Path -Path $sshDir)) {
+          New-Item -ItemType Directory -Force -Path $sshDir
+        }
         # Generate SSH keys locally
         ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev -N ""
         ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/sshkey-avd-resource-group-dev -N ""
