@@ -104,9 +104,11 @@ jobs:
           const fs = require('fs');
           const privateKeyAks = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-aks-kubernetes-arc-rg-dev', 'utf8');
           const privateKeyAvd = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-avd-resource-group-dev', 'utf8');
+          const { Octokit } = require("@octokit/rest");
+          const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
           const owner = context.repo.owner;
           const repo = context.repo.repo;
-          const publicKey = await github.rest.actions.getRepoPublicKey({
+          const publicKey = await octokit.actions.getRepoPublicKey({
             owner,
             repo
           });
@@ -120,14 +122,14 @@ jobs:
           };
           const encryptedPrivateKeyAks = encrypt(privateKeyAks);
           const encryptedPrivateKeyAvd = encrypt(privateKeyAvd);
-          await github.rest.actions.createOrUpdateRepoSecret({
+          await octokit.actions.createOrUpdateRepoSecret({
             owner,
             repo,
             secret_name: 'SSH_PRIVATE_KEY_AKS',
             encrypted_value: encryptedPrivateKeyAks,
             key_id
           });
-          await github.rest.actions.createOrUpdateRepoSecret({
+          await octokit.actions.createOrUpdateRepoSecret({
             owner,
             repo,
             secret_name: 'SSH_PRIVATE_KEY_AVD',
@@ -143,9 +145,11 @@ jobs:
           const fs = require('fs');
           const publicKeyAks = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub', 'utf8');
           const publicKeyAvd = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-avd-resource-group-dev.pub', 'utf8');
+          const { Octokit } = require("@octokit/rest");
+          const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
           const owner = context.repo.owner;
           const repo = context.repo.repo;
-          const publicKey = await github.rest.actions.getRepoPublicKey({
+          const publicKey = await octokit.actions.getRepoPublicKey({
             owner,
             repo
           });
@@ -159,14 +163,14 @@ jobs:
           };
           const encryptedPublicKeyAks = encrypt(publicKeyAks);
           const encryptedPublicKeyAvd = encrypt(publicKeyAvd);
-          await github.rest.actions.createOrUpdateRepoSecret({
+          await octokit.actions.createOrUpdateRepoSecret({
             owner,
             repo,
             secret_name: 'SSH_PUBLIC_KEY_AKS',
             encrypted_value: encryptedPublicKeyAks,
             key_id
           });
-          await github.rest.actions.createOrUpdateRepoSecret({
+          await octokit.actions.createOrUpdateRepoSecret({
             owner,
             repo,
             secret_name: 'SSH_PUBLIC_KEY_AVD',
