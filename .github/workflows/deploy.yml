@@ -90,10 +90,10 @@ jobs:
       shell: pwsh
       run: |
         # Create Key Vault for AKS
-        New-AzKeyVault -ResourceGroupName "${{ env.aks-resourceGroupName }}" -VaultName "${{ env.aksKeyVaultName }}" -Location "${{ env.Location }}" -Sku Standard
+        New-AzKeyVault -ResourceGroupName "${{ env.aks-resourceGroupName }}-"${{ env.environmentName }}" -VaultName "${{ env.aksKeyVaultName }}" -Location "${{ env.Location }}" -Sku Standard
 
         # Create Key Vault for AVD
-        New-AzKeyVault -ResourceGroupName "${{ env.avd-resourceGroupName }}" -VaultName "${{ env.avdKeyVaultName }}" -Location "${{ env.Location }}" -Sku Standard
+        New-AzKeyVault -ResourceGroupName "${{ env.avd-resourceGroupName }}-${{ env.environmentName }}" -VaultName "${{ env.avdKeyVaultName }}" -Location "${{ env.Location }}" -Sku Standard
 
     - name: Generate and Store SSH Keys in Key Vaults for AKS and AVD
       shell: pwsh
