@@ -89,94 +89,32 @@ jobs:
       shell: pwsh
       run: |
         # Generate SSH keys locally
-        ssh-keygen -t rsa -b 2048 -f $HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev -N ""
-        ssh-keygen -t rsa -b 2048 -f $HOME/.ssh/sshkey-avd-resource-group-dev -N ""
+        ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev -N ""
+        ssh-keygen -t rsa -b 4096 -f $HOME/.ssh/sshkey-avd-resource-group-dev -N ""
 
         # Upload SSH keys to Azure
         az sshkey create --name "sshkey-aks-kubernetes-arc-rg-dev" --resource-group "${{ env.aks-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast" --public-key "@$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub"
         az sshkey create --name "sshkey-avd-resource-group-dev" --resource-group "${{ env.avd-resourceGroupName }}-${{env.environmentName}}" --location "norwayeast" --public-key "@$HOME/.ssh/sshkey-avd-resource-group-dev.pub"
 
     - name: Store SSH Private Keys in Secrets for AKS and AVD
-      uses: actions/github-script@v4
-      with:
-        script: |
-          const { execSync } = require('child_process');
-          const fs = require('fs');
-          const privateKeyAks = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-aks-kubernetes-arc-rg-dev', 'utf8');
-          const privateKeyAvd = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-avd-resource-group-dev', 'utf8');
-          const { Octokit } = require("@octokit/rest");
-          const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-          const owner = context.repo.owner;
-          const repo = context.repo.repo;
-          const publicKey = await octokit.actions.getRepoPublicKey({
-            owner,
-            repo
-          });
-          const { key, key_id } = publicKey.data;
-          const sodium = require('tweetsodium');
-          const encrypt = (value) => {
-            const messageBytes = Buffer.from(value);
-            const keyBytes = Buffer.from(key, 'base64');
-            const encryptedBytes = sodium.seal(messageBytes, keyBytes);
-            return Buffer.from(encryptedBytes).toString('base64');
-          };
-          const encryptedPrivateKeyAks = encrypt(privateKeyAks);
-          const encryptedPrivateKeyAvd = encrypt(privateKeyAvd);
-          await octokit.actions.createOrUpdateRepoSecret({
-            owner,
-            repo,
-            secret_name: 'SSH_PRIVATE_KEY_AKS',
-            encrypted_value: encryptedPrivateKeyAks,
-            key_id
-          });
-          await octokit.actions.createOrUpdateRepoSecret({
-            owner,
-            repo,
-            secret_name: 'SSH_PRIVATE_KEY_AVD',
-            encrypted_value: encryptedPrivateKeyAvd,
-            key_id
-          });
+      shell: pwsh
+      run: |
+        $privateKeyAks = Get-Content -Raw -Path "$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev"
+        $privateKeyAvd = Get-Content -Raw -Path "$HOME/.ssh/sshkey-avd-resource-group-dev"
+        echo "::add-mask::$privateKeyAks"
+        echo $privateKeyAks | gh secret set SSH_PRIVATE_KEY_AKS --body -
+        echo "::add-mask::$privateKeyAvd"
+        echo $privateKeyAvd | gh secret set SSH_PRIVATE_KEY_AVD --body -
 
     - name: Store SSH Public Keys in Secrets for AKS and AVD
-      uses: actions/github-script@v4
-      with:
-        script: |
-          const { execSync } = require('child_process');
-          const fs = require('fs');
-          const publicKeyAks = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub', 'utf8');
-          const publicKeyAvd = fs.readFileSync(process.env.HOME + '/.ssh/sshkey-avd-resource-group-dev.pub', 'utf8');
-          const { Octokit } = require("@octokit/rest");
-          const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-          const owner = context.repo.owner;
-          const repo = context.repo.repo;
-          const publicKey = await octokit.actions.getRepoPublicKey({
-            owner,
-            repo
-          });
-          const { key, key_id } = publicKey.data;
-          const sodium = require('tweetsodium');
-          const encrypt = (value) => {
-            const messageBytes = Buffer.from(value);
-            const keyBytes = Buffer.from(key, 'base64');
-            const encryptedBytes = sodium.seal(messageBytes, keyBytes);
-            return Buffer.from(encryptedBytes).toString('base64');
-          };
-          const encryptedPublicKeyAks = encrypt(publicKeyAks);
-          const encryptedPublicKeyAvd = encrypt(publicKeyAvd);
-          await octokit.actions.createOrUpdateRepoSecret({
-            owner,
-            repo,
-            secret_name: 'SSH_PUBLIC_KEY_AKS',
-            encrypted_value: encryptedPublicKeyAks,
-            key_id
-          });
-          await octokit.actions.createOrUpdateRepoSecret({
-            owner,
-            repo,
-            secret_name: 'SSH_PUBLIC_KEY_AVD',
-            encrypted_value: encryptedPublicKeyAvd,
-            key_id
-          });
+      shell: pwsh
+      run: |
+        $publicKeyAks = Get-Content -Raw -Path "$HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev.pub"
+        $publicKeyAvd = Get-Content -Raw -Path "$HOME/.ssh/sshkey-avd-resource-group-dev.pub"
+        echo "::add-mask::$publicKeyAks"
+        echo $publicKeyAks | gh secret set SSH_PUBLIC_KEY_AKS --body -
+        echo "::add-mask::$publicKeyAvd"
+        echo $publicKeyAvd | gh secret set SSH_PUBLIC_KEY_AVD --body -
 
     - name: Deploy Azure Local and Connect On-Prem
       shell: pwsh
