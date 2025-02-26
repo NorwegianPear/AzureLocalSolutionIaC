@@ -70,6 +70,7 @@ jobs:
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/deploy.rg_kv.bicep" `
           -TemplateParameterFile "json/deploy.rg_kv.json" `
+          -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
           -location "${{ env.Location }}" `
           -tenantId "${{ secrets.AZURE_TENANT_ID }}"
 
