@@ -1,0 +1,67 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "norwayeast"
+        },
+        "environmentType": {
+            "value": "DEV"
+        },
+        "environmentTypeLowerCase": {
+            "value": "dev"
+        },
+        "resourceGroups": {
+            "value": [
+                {
+                    "name": "aks-kubernetes-arc-rg",
+                    "tags": {
+                        "deployedBy": "Uy Le Thai Phan",
+                        "Service": "Azure Kubernetes Service",
+                        "Project": "AzureLocalSolutionIaC",
+                        "Solution": "Repository",
+                        "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
+                    }
+                },
+                {
+                    "name": "avd-resource-group",
+                    "tags": {
+                        "deployedBy": "Uy Le Thai Phan",
+                        "Service": "Azure Virtual Desktop",
+                        "Project": "AzureLocalSolutionIaC",
+                        "Solution": "Repository",
+                        "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
+                    }
+                }
+            ]
+        },
+        "keyVaults": {
+            "value": [
+                {
+                    "name": "aks-keyvault",
+                    "resourceGroupName": "aks-kubernetes-arc-rg",
+                    "sku": "standard",
+                    "tags": {
+                        "deployedBy": "Uy Le Thai Phan",
+                        "Service": "Azure Kubernetes Service",
+                        "Project": "AzureLocalSolutionIaC",
+                        "Solution": "Repository",
+                        "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
+                    }
+                },
+                {
+                    "name": "avd-keyvault",
+                    "resourceGroupName": "avd-resource-group",
+                    "sku": "standard",
+                    "tags": {
+                        "deployedBy": "Uy Le Thai Phan",
+                        "Service": "Azure Virtual Desktop",
+                        "Project": "AzureLocalSolutionIaC",
+                        "Solution": "Repository",
+                        "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
+                    }
+                }
+            ]
+        }
+    }
+}

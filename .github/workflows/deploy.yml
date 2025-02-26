@@ -64,38 +64,14 @@ jobs:
         Install-Module -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Force
         Install-Module Az.KeyVault -Repository PSGallery -Force
 
-    - name: Deploy Resource Group for AKS
+    - name: Deploy Resource Groups and Create Key Vaults for AKS and AVD
       shell: pwsh
       run: |
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
-          -TemplateFile "bicep/resourcegroup.bicep" `
-          -resourceGroupName "${{ env.aks-resourceGroupName }}" `
-          -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
-          -TemplateParameterFile "json/deploy-resource-group-aks.json" `
+          -TemplateFile "bicep/deploy.rg_kv.bicep" `
+          -TemplateParameterFile "json/deploy.rg_kv.json" `
           -location "${{ env.Location }}" `
           -tenantId "${{ secrets.AZURE_TENANT_ID }}"
-
-    - name: Deploy Resource Group for AVD
-      shell: pwsh
-      run: |
-        New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
-          -TemplateFile "bicep/resourcegroup.bicep" `
-          -resourceGroupName "${{ env.avd-resourceGroupName }}" `
-          -subscriptionId "${{ secrets.AZURE_SUBSCRIPTION_ID }}" `
-          -TemplateParameterFile "json/deploy-resource-group-avd.json" `
-          -location "${{ env.Location }}" `
-          -tenantId "${{ secrets.AZURE_TENANT_ID }}"
-
-    - name: Create Key Vaults for AKS and AVD
-      shell: pwsh
-      run: |
-        New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
-          -TemplateFile "bicep/keyvault.bicep" `
-          -location "${{ env.Location }}" `
-          -aksKeyVaultName "${{ env.aksKeyVaultName }}" `
-          -avdKeyVaultName "${{ env.avdKeyVaultName }}" `
-          -aksResourceGroupName "${{ env.aks-resourceGroupName }}-${{ env.environmentName }}" `
-          -avdResourceGroupName "${{ env.avd-resourceGroupName }}-${{ env.environmentName }}"
 
     - name: Generate and Store SSH Keys in Key Vaults for AKS and AVD
       shell: pwsh
