@@ -91,14 +91,14 @@ jobs:
         # Store SSH private keys in Key Vaults
         $privateKeyAks = Get-Content -Raw -Path "$sshDir/sshkey-aks-kubernetes-arc-rg-dev"
         $privateKeyAvd = Get-Content -Raw -Path "$sshDir/sshkey-avd-resource-group-dev"
-        Set-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}" -Name "SSHPrivateKeyAks" -SecretValue (ConvertTo-SecureString -String $privateKeyAks -AsPlainText -Force)
-        Set-AzKeyVaultSecret -VaultName "${{ env.avdKeyVaultName }}" -Name "SSHPrivateKeyAvd" -SecretValue (ConvertTo-SecureString -String $privateKeyAvd -AsPlainText -Force)
+        Set-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPrivateKeyAks" -SecretValue (ConvertTo-SecureString -String $privateKeyAks -AsPlainText -Force)
+        Set-AzKeyVaultSecret -VaultName "${{ env.avdKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPrivateKeyAvd" -SecretValue (ConvertTo-SecureString -String $privateKeyAvd -AsPlainText -Force)
 
         # Store SSH public keys in Key Vaults
         $publicKeyAks = Get-Content -Raw -Path "$sshDir/sshkey-aks-kubernetes-arc-rg-dev.pub"
         $publicKeyAvd = Get-Content -Raw -Path "$sshDir/sshkey-avd-resource-group-dev.pub"
-        Set-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}" -Name "SSHPublicKeyAks" -SecretValue (ConvertTo-SecureString -String $publicKeyAks -AsPlainText -Force)
-        Set-AzKeyVaultSecret -VaultName "${{ env.avdKeyVaultName }}" -Name "SSHPublicKeyAvd" -SecretValue (ConvertTo-SecureString -String $publicKeyAvd -AsPlainText -Force)
+        Set-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks" -SecretValue (ConvertTo-SecureString -String $publicKeyAks -AsPlainText -Force)
+        Set-AzKeyVaultSecret -VaultName "${{ env.avdKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAvd" -SecretValue (ConvertTo-SecureString -String $publicKeyAvd -AsPlainText -Force)
 
     - name: Deploy Azure Local and Connect On-Prem
       shell: pwsh
