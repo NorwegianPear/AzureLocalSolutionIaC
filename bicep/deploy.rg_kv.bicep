@@ -7,6 +7,9 @@ param environmentType string
 param environmentTypeLowerCase string
 param resourceGroups array
 param keyVaults array
+param aksCluster1ClientID string
+param aksCluster2ClientID string
+param azurelocalsolutioniac_clientid string
 
 var resourceGroupConfigs = [for (resourceGroup, i) in resourceGroups: {
   name: '${resourceGroup.name}-${environmentTypeLowerCase}'
@@ -34,6 +37,53 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
   tags: keyVault.tags
   sku: keyVault.sku
   resourceGroupName: keyVault.resourceGroupName
+  accessPolicies: [
+    {
+      tenantId: tenantId
+      objectId: azurelocalsolutioniac_clientid
+      permissions: {
+        secrets: [
+          'get'
+          'list'
+          'set'
+          'delete'
+          'recover'
+          'backup'
+          'restore'
+        ]
+      }
+    }
+    {
+      tenantId: tenantId
+      objectId: aksCluster1ClientID
+      permissions: {
+        secrets: [
+          'get'
+          'list'
+          'set'
+          'delete'
+          'recover'
+          'backup'
+          'restore'
+        ]
+      }
+    }
+    {
+      tenantId: tenantId
+      objectId: aksCluster2ClientID
+      permissions: {
+        secrets: [
+          'get'
+          'list'
+          'set'
+          'delete'
+          'recover'
+          'backup'
+          'restore'
+        ]
+      }
+    }
+  ]
 }]
 
 module KeyVault '../avm/res/key-vault/vault/main.bicep' = [for (keyVault, i) in keyVaultConfigs: {
@@ -42,7 +92,7 @@ module KeyVault '../avm/res/key-vault/vault/main.bicep' = [for (keyVault, i) in 
   params: {
     name: keyVault.name
     sku: keyVault.sku
-    accessPolicies: []
+    accessPolicies: keyVault.accessPolicies
   }
 }]
 
