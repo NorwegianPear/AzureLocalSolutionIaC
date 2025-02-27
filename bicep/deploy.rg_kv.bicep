@@ -42,17 +42,17 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
   resourceGroupName: keyVault.resourceGroupName
   roleAssignments: [
     {
-      principalId: azurelocalsolutioniac_clientid
+      principalId: azurelocalsolutioniac_objectid
       roleDefinitionIdOrName: 'Key Vault Administrator'
       principalType: 'ServicePrincipal'
     }
     {
-      principalId: aksCluster1ClientID
+      principalId: aksCluster1ObjectID
       roleDefinitionIdOrName: 'Key Vault Administrator'
       principalType: 'ServicePrincipal'
     }
     {
-      principalId: aksCluster2ClientID
+      principalId: aksCluster2ObjectID
       roleDefinitionIdOrName: 'Key Vault Administrator'
       principalType: 'ServicePrincipal'
     }
@@ -60,7 +60,7 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
   accessPolicies: [
     {
       tenantId: tenantId
-      objectId: azurelocalsolutioniac_clientid
+      objectId: azurelocalsolutioniac_objectid
       permissions: {
         secrets: [
           'get'
@@ -110,7 +110,7 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
     }
     {
       tenantId: tenantId
-      objectId: azurelocalsolutioniac_clientid
+      objectId: azurelocalsolutioniac_objectid
       permissions: {
         secrets: [
           'get'
@@ -160,7 +160,7 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
     }
     {
       tenantId: tenantId
-      objectId: aksCluster1ClientID
+      objectId: aksCluster1ObjectID
       permissions: {
         secrets: [
           'get'
@@ -210,7 +210,7 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
     }
     {
       tenantId: tenantId
-      objectId: aksCluster2ClientID
+      objectId: aksCluster2ObjectID
       permissions: {
         secrets: [
           'get'
