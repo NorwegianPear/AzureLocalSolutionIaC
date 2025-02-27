@@ -69,6 +69,41 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
           'backup'
           'restore'
         ]
+        keys: [
+          'get'
+          'list'
+          'create'
+          'delete'
+          'import'
+          'update'
+          'backup'
+          'restore'
+          'recover'
+          'purge'
+          'sign'
+          'verify'
+          'wrapKey'
+          'unwrapKey'
+          'encrypt'
+          'decrypt'
+        ]
+        certificates: [
+          'get'
+          'list'
+          'delete'
+          'create'
+          'import'
+          'update'
+          'managecontacts'
+          'getissuers'
+          'listissuers'
+          'setissuers'
+          'deleteissuers'
+          'manageissuers'
+          'recover'
+          'backup'
+          'restore'
+        ]
       }
     }
     {
@@ -80,6 +115,41 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
           'list'
           'set'
           'delete'
+          'recover'
+          'backup'
+          'restore'
+        ]
+        keys: [
+          'get'
+          'list'
+          'create'
+          'delete'
+          'import'
+          'update'
+          'backup'
+          'restore'
+          'recover'
+          'purge'
+          'sign'
+          'verify'
+          'wrapKey'
+          'unwrapKey'
+          'encrypt'
+          'decrypt'
+        ]
+        certificates: [
+          'get'
+          'list'
+          'delete'
+          'create'
+          'import'
+          'update'
+          'managecontacts'
+          'getissuers'
+          'listissuers'
+          'setissuers'
+          'deleteissuers'
+          'manageissuers'
           'recover'
           'backup'
           'restore'
@@ -99,6 +169,41 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
           'backup'
           'restore'
         ]
+        keys: [
+          'get'
+          'list'
+          'create'
+          'delete'
+          'import'
+          'update'
+          'backup'
+          'restore'
+          'recover'
+          'purge'
+          'sign'
+          'verify'
+          'wrapKey'
+          'unwrapKey'
+          'encrypt'
+          'decrypt'
+        ]
+        certificates: [
+          'get'
+          'list'
+          'delete'
+          'create'
+          'import'
+          'update'
+          'managecontacts'
+          'getissuers'
+          'listissuers'
+          'setissuers'
+          'deleteissuers'
+          'manageissuers'
+          'recover'
+          'backup'
+          'restore'
+        ]
       }
     }
     {
@@ -110,6 +215,41 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
           'list'
           'set'
           'delete'
+          'recover'
+          'backup'
+          'restore'
+        ]
+        keys: [
+          'get'
+          'list'
+          'create'
+          'delete'
+          'import'
+          'update'
+          'backup'
+          'restore'
+          'recover'
+          'purge'
+          'sign'
+          'verify'
+          'wrapKey'
+          'unwrapKey'
+          'encrypt'
+          'decrypt'
+        ]
+        certificates: [
+          'get'
+          'list'
+          'delete'
+          'create'
+          'import'
+          'update'
+          'managecontacts'
+          'getissuers'
+          'listissuers'
+          'setissuers'
+          'deleteissuers'
+          'manageissuers'
           'recover'
           'backup'
           'restore'
@@ -129,10 +269,6 @@ module KeyVault '../avm/res/key-vault/vault/main.bicep' = [for (keyVault, i) in 
     roleAssignments: keyVault.roleAssignments
   }
 }]
-
-
-
-
 
 output resourceGroupNames array = [for rg in resourceGroupConfigs: rg.name]
 output resourceGroupLocations array = [for rg in resourceGroupConfigs: rg.location]
