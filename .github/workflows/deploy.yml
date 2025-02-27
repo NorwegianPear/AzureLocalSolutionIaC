@@ -17,6 +17,7 @@ defaults:
 env:
   TenantID: ${{ secrets.TENANT_ID }}
   AppID: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+  AppObjectID: ${{ secrets.AZURELOCALSOLUTIONIAC_OBJECTID }}
   Subscription: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   Location: 'norwayeast'
   aks-resourceGroupName: 'aks-kubernetes-arc-rg'
@@ -74,6 +75,7 @@ jobs:
           -location "${{ env.Location }}" `
           -tenantId "${{ secrets.AZURE_TENANT_ID }}" `
           -azurelocalsolutioniac_clientid "${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}" `
+          -azurelocalsolutioniac_objectid "${{ secrets.AZURELOCALSOLUTIONIAC_OBJECTID }}" `
           -aksCluster1ClientID "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}" `
           -aksCluster2ClientID "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}"
 

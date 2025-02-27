@@ -10,6 +10,7 @@ param keyVaults array
 param aksCluster1ClientID string
 param aksCluster2ClientID string
 param azurelocalsolutioniac_clientid string
+param azurelocalsolutioniac_objectid string
 
 var resourceGroupConfigs = [for (resourceGroup, i) in resourceGroups: {
   name: '${resourceGroup.name}-${environmentTypeLowerCase}'
@@ -41,6 +42,21 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
     {
       tenantId: tenantId
       objectId: azurelocalsolutioniac_clientid
+      permissions: {
+        secrets: [
+          'get'
+          'list'
+          'set'
+          'delete'
+          'recover'
+          'backup'
+          'restore'
+        ]
+      }
+    }
+    {
+      tenantId: tenantId
+      objectId: azurelocalsolutioniac_objectid
       permissions: {
         secrets: [
           'get'
