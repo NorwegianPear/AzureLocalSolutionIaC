@@ -41,17 +41,17 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
   roleAssignments: [
     {
       principalId: azurelocalsolutioniac_objectid
-      roleDefinitionIdOrName: 'Key Vault Secrets User'
+      roleDefinitionIdOrName: 'Key Vault Contributor'
       principalType: 'ServicePrincipal'
     }
     {
       principalId: aksCluster1ClientID
-      roleDefinitionIdOrName: 'Key Vault Secrets User'
+      roleDefinitionIdOrName: 'Key Vault Contributor'
       principalType: 'ServicePrincipal'
     }
     {
       principalId: aksCluster2ClientID
-      roleDefinitionIdOrName: 'Key Vault Secrets User'
+      roleDefinitionIdOrName: 'Key Vault Contributor'
       principalType: 'ServicePrincipal'
     }
   ]
