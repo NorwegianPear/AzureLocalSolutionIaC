@@ -42,6 +42,15 @@ jobs:
     - name: 🤑💸Checkout parameter
       uses: actions/checkout@v3
 
+    - name: Install Azure CLI
+      shell: pwsh
+      run: |
+        if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
+          Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi
+          Start-Process msiexec.exe -ArgumentList '/I AzureCLI.msi /quiet' -Wait
+          Remove-Item .\AzureCLI.msi
+        }
+
     - name: Install Azure module to resolve Token issue
       uses: ./.github/actions/az-install
       with:
@@ -110,10 +119,6 @@ jobs:
     - name: Register the Hyper-V Machine with Azure Arc
       shell: pwsh
       run: |
-        
-
-
-        # Register the Machine with Azure Arc
         $global:scriptPath = $myinvocation.mycommand.definition
 
         function Restart-AsAdmin {
@@ -162,11 +167,20 @@ jobs:
             & "$env:ProgramW6432\AzureConnectedMachineAgent\azcmagent.exe" connect --resource-group "$env:RESOURCE_GROUP" --tenant-id "$env:TENANT_ID" --location "$env:LOCATION" --subscription-id "$env:SUBSCRIPTION_ID" --cloud "$env:CLOUD" --correlation-id "$env:CORRELATION_ID";
         }
         catch {
-            $logBody = @{subscriptionId="$env:SUBSCRIPTION_ID";resourceGroup="$env:RESOURCE_GROUP";tenantId="$env:TENANT_ID";location="$env:LOCATION";correlationId="$env:CORRELATION_ID";authType="$env:AUTH_TYPE";operation="onboarding";messageType=$_.FullyQualifiedErrorId;message="$_";};
-            Invoke-WebRequest -UseBasicParsing -Uri "https://gbl.his.arc.azure.com/log" -Method "PUT" -Body ($logBody | ConvertTo-Json) | out-null;
-            Write-Host  -ForegroundColor red $_.Exception;
+            $logBody = @{
+                subscriptionId = "$env:SUBSCRIPTION_ID"
+                resourceGroup = "$env:RESOURCE_GROUP"
+                tenantId = "$env:TENANT_ID"
+                location = "$env:LOCATION"
+                correlationId = "$env:CORRELATION_ID"
+                authType = "$env:AUTH_TYPE"
+                operation = "onboarding"
+                messageType = $_.FullyQualifiedErrorId
+                message = "$_"
+            }
+            Invoke-WebRequest -UseBasicParsing -Uri "https://gbl.his.arc.azure.com/log" -Method "PUT" -Body ($logBody | ConvertTo-Json) | out-null
+            Write-Host -ForegroundColor red $_.Exception
         }
-
 
     - name: Register Kubernetes Cluster with Azure Arc
       shell: pwsh
@@ -184,8 +198,6 @@ jobs:
 
         # Register Kubernetes cluster with Azure Arc
         az connectedk8s connect --name $clusterName --resource-group $resourceGroupName --location $location --ssh-private-key-path "$env:HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev" --ssh-public-key $sshPublicKey
-
-
 
     - name: Deploy Bicep for AKS
       shell: pwsh
