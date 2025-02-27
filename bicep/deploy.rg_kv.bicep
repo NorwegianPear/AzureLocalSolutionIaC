@@ -38,6 +38,23 @@ var keyVaultConfigs = [for (keyVault, i) in keyVaults: {
   tags: keyVault.tags
   sku: keyVault.sku
   resourceGroupName: keyVault.resourceGroupName
+  roleAssignments: [
+    {
+      principalId: azurelocalsolutioniac_objectid
+      roleDefinitionIdOrName: 'Key Vault Secrets User'
+      principalType: 'ServicePrincipal'
+    }
+    {
+      principalId: aksCluster1ClientID
+      roleDefinitionIdOrName: 'Key Vault Secrets User'
+      principalType: 'ServicePrincipal'
+    }
+    {
+      principalId: aksCluster2ClientID
+      roleDefinitionIdOrName: 'Key Vault Secrets User'
+      principalType: 'ServicePrincipal'
+    }
+  ]
   accessPolicies: [
     {
       tenantId: tenantId
@@ -109,8 +126,13 @@ module KeyVault '../avm/res/key-vault/vault/main.bicep' = [for (keyVault, i) in 
     name: keyVault.name
     sku: keyVault.sku
     accessPolicies: keyVault.accessPolicies
+    roleAssignments: keyVault.roleAssignments
   }
 }]
+
+
+
+
 
 output resourceGroupNames array = [for rg in resourceGroupConfigs: rg.name]
 output resourceGroupLocations array = [for rg in resourceGroupConfigs: rg.location]
