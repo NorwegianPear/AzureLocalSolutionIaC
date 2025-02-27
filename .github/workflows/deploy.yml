@@ -33,7 +33,7 @@ env:
   
 jobs:
   dev:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: dev
     env:
       environmentName: dev
@@ -66,6 +66,7 @@ jobs:
         Install-Module -Name AzureAD -Force -AllowClobber
         Install-Module -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Force
         Install-Module Az.KeyVault -Repository PSGallery -Force
+        Install-Module -Name Az.ConnectedMachine -Force -AllowClobber
 
     - name: Deploy Resource Groups and Create Key Vaults for AKS and AVD
       shell: pwsh
@@ -106,27 +107,85 @@ jobs:
         Set-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks" -SecretValue (ConvertTo-SecureString -String $publicKeyAks -AsPlainText -Force)
         Set-AzKeyVaultSecret -VaultName "${{ env.avdKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAvd" -SecretValue (ConvertTo-SecureString -String $publicKeyAvd -AsPlainText -Force)
 
-    - name: Deploy Azure Local and Connect On-Prem
+    - name: Register the Hyper-V Machine with Azure Arc
+      shell: pwsh
+      run: |
+        
+
+
+        # Register the Machine with Azure Arc
+        $global:scriptPath = $myinvocation.mycommand.definition
+
+        function Restart-AsAdmin {
+            $pwshCommand = "powershell"
+            if ($PSVersionTable.PSVersion.Major -ge 6) {
+                $pwshCommand = "pwsh"
+            }
+
+            try {
+                Write-Host "This script requires administrator permissions to install the Azure Connected Machine Agent. Attempting to restart script with elevated permissions..."
+                $arguments = "-NoExit -Command `"& '$scriptPath'`"" 
+                Start-Process $pwshCommand -Verb runAs -ArgumentList $arguments
+                exit 0
+            } catch {
+                throw "Failed to elevate permissions. Please run this script as Administrator."
+            }
+        }
+
+        try {
+            if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+                if ([System.Environment]::UserInteractive) {
+                    Restart-AsAdmin
+                } else {
+                    throw "This script requires administrator permissions to install the Azure Connected Machine Agent. Please run this script as Administrator."
+                }
+            }
+
+            $env:SUBSCRIPTION_ID = "${{ secrets.AZURE_SUBSCRIPTION_ID }}";
+            $env:RESOURCE_GROUP = "aks-kubernetes-arc-rg-dev";
+            $env:TENANT_ID = "${{ secrets.AZURE_TENANT_ID }}";
+            $env:LOCATION = "norwayeast";
+            $env:AUTH_TYPE = "token";
+            $env:CORRELATION_ID = "059e8b09-3a2f-43b8-9ad3-a7d3d8e7b9b6";
+            $env:CLOUD = "AzureCloud";
+
+            [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072;
+
+            # Download the installation package
+            Invoke-WebRequest -UseBasicParsing -Uri "https://gbl.his.arc.azure.com/azcmagent-windows" -TimeoutSec 30 -OutFile "$env:TEMP\install_windows_azcmagent.ps1";
+
+            # Install the hybrid agent
+            & "$env:TEMP\install_windows_azcmagent.ps1";
+            if ($LASTEXITCODE -ne 0) { exit 1; }
+
+            # Run connect command
+            & "$env:ProgramW6432\AzureConnectedMachineAgent\azcmagent.exe" connect --resource-group "$env:RESOURCE_GROUP" --tenant-id "$env:TENANT_ID" --location "$env:LOCATION" --subscription-id "$env:SUBSCRIPTION_ID" --cloud "$env:CLOUD" --correlation-id "$env:CORRELATION_ID";
+        }
+        catch {
+            $logBody = @{subscriptionId="$env:SUBSCRIPTION_ID";resourceGroup="$env:RESOURCE_GROUP";tenantId="$env:TENANT_ID";location="$env:LOCATION";correlationId="$env:CORRELATION_ID";authType="$env:AUTH_TYPE";operation="onboarding";messageType=$_.FullyQualifiedErrorId;message="$_";};
+            Invoke-WebRequest -UseBasicParsing -Uri "https://gbl.his.arc.azure.com/log" -Method "PUT" -Body ($logBody | ConvertTo-Json) | out-null;
+            Write-Host  -ForegroundColor red $_.Exception;
+        }
+
+
+    - name: Register Kubernetes Cluster with Azure Arc
       shell: pwsh
       run: |
         $resourceGroupName = "aks-kubernetes-arc-rg-dev"
         $location = "norwayeast"
-        $machineName = "PCNOR262914"
+        $clusterName = "my-aks-cluster"
+        $sshPublicKey = Get-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks"
 
-        # Install Azure PowerShell
-        Install-Module -Name Az -AllowClobber -Scope CurrentUser
+        # Install Azure CLI
+        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-        # Login to Azure
-        Connect-AzAccount
+        # Install Azure Arc CLI extension
+        az extension add --name connectedk8s
 
-        # Create Resource Group
-        New-AzResourceGroup -Name $resourceGroupName -Location $location
+        # Register Kubernetes cluster with Azure Arc
+        az connectedk8s connect --name $clusterName --resource-group $resourceGroupName --location $location --ssh-private-key-path "$env:HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev" --ssh-public-key $sshPublicKey
 
-        # Install the Connected Machine Agent
-        Install-Module -Name Az.ConnectedMachine
 
-        # Register the Machine with Azure Arc
-        Connect-AzConnectedMachine -ResourceGroupName $resourceGroupName -Name $machineName -Location $location
 
     - name: Deploy Bicep for AKS
       shell: pwsh
