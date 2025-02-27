@@ -3,22 +3,47 @@ description: Install PowerShell Az module
 inputs:
   version:
     required: false
-    description: Spesific version (1.2.3)
+    description: Specific version (1.2.3)
 
 runs:
   using: "composite"
   steps:
     - name: Find latest version
-      run: write-output "version=$((Find-Module Az).Version)" >> $env:GITHUB_OUTPUT
-      shell: pwsh
       id: get-current-version
+      shell: pwsh
+      run: |
+        $version = (Find-Module Az).Version
+        Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+
     - name: Setup PowerShell module cache
       id: cacher
       uses: actions/cache@v3
       with:
         path: ~/.local/share/powershell/Modules/Az*
         key: az_cache-${{ inputs.version || steps.get-current-version.outputs.version }}
+
     - name: Installing modules
       if: steps.cacher.outputs.cache-hit != 'true'
       shell: pwsh
-      run: Install-Module Az -Force -RequiredVersion ${{ inputs.version || steps.get-current-version.outputs.version }}
+      run: |
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $retryCount = 0
+        $maxRetries = 3
+        $success = $false
+        while (-not $success -and $retryCount -lt $maxRetries) {
+          try {
+            Install-Module Az -Force -RequiredVersion ${{ inputs.version || steps.get-current-version.outputs.version }} -ErrorAction Stop
+            Write-Host "Module Az installed successfully."
+            $success = $true
+          } catch {
+            Write-Host "Failed to install module Az: $_"
+            $retryCount++
+            if ($retryCount -lt $maxRetries) {
+              Write-Host "Retrying installation of module Az ($retryCount/$maxRetries)..."
+              Start-Sleep -Seconds 10
+            } else {
+              Write-Host "Exceeded maximum retries for module Az. Exiting..."
+              exit 1
+            }
+          }
+        }

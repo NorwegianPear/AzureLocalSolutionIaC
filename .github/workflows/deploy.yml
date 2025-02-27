@@ -47,10 +47,15 @@ jobs:
       run: |
         if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
           Write-Host "Azure CLI not found. Installing Azure CLI..."
-          Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi
-          Start-Process msiexec.exe -ArgumentList '/I AzureCLI.msi /quiet' -Wait
-          Remove-Item .\AzureCLI.msi
-          Write-Host "Azure CLI installation completed."
+          try {
+            Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi -TimeoutSec 600
+            Start-Process msiexec.exe -ArgumentList '/I AzureCLI.msi /quiet' -Wait -NoNewWindow
+            Remove-Item .\AzureCLI.msi
+            Write-Host "Azure CLI installation completed."
+          } catch {
+            Write-Host "Azure CLI installation failed: $_"
+            exit 1
+          }
         } else {
           Write-Host "Azure CLI is already installed."
         }
@@ -61,15 +66,6 @@ jobs:
       uses: ./.github/actions/az-install
       with:
         version: 13.2.0          # This version of PS remediates the OIDC token expiry issue - #10249
-
-    - name: 🥳 Connect to Azure
-      id: azure-login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        enable-AzPSSession: true
 
     - name: Install PowerShell Modules
       shell: pwsh
@@ -82,6 +78,17 @@ jobs:
         Install-Module -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Force
         Install-Module Az.KeyVault -Repository PSGallery -Force
         Install-Module -Name Az.ConnectedMachine -Force -AllowClobber
+
+    - name: 🥳 Connect to Azure
+      id: azure-login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+
 
     - name: Deploy Resource Groups and Create Key Vaults for AKS and AVD
       shell: pwsh
