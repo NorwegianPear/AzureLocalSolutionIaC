@@ -70,6 +70,25 @@ jobs:
     - name: 🤑💸Checkout parameter
       uses: actions/checkout@v3
 
+
+    - name: Install Minikube
+      shell: pwsh
+      run: |
+        if (-not (Get-Command minikube -ErrorAction SilentlyContinue)) {
+          Write-Host "Minikube not found. Installing Minikube..."
+          Invoke-WebRequest -Uri https://storage.googleapis.com/minikube/releases/latest/minikube-installer.exe -OutFile minikube-installer.exe
+          Start-Process -FilePath .\minikube-installer.exe -ArgumentList '/S' -Wait
+          Remove-Item .\minikube-installer.exe
+          Write-Host "Minikube installation completed."
+        } else {
+          Write-Host "Minikube is already installed."
+        }
+
+    - name: Start Minikube
+      shell: pwsh
+      run: |
+        minikube start --driver=hyperv
+
     - name: Install Azure CLI
       if: false
       shell: pwsh
@@ -120,6 +139,14 @@ jobs:
           exit 1
         }
 
+    - name: Install Azure Arc CLI extension
+      shell: pwsh
+      run: |
+        az extension add --name connectedk8s
+        az extension add --name k8s-extension
+        az extension add --name customlocation
+
+
     - name: Install Azure module to resolve Token issue
       uses: ./.github/actions/az-install
       with:
@@ -131,27 +158,9 @@ jobs:
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $modules = @("Az.Accounts", "Az.Resources", "Az.Network", "Az.Compute", "AzureAD", "Microsoft.PowerShell.SecretManagement", "Az.KeyVault", "Az.ConnectedMachine")
         foreach ($module in $modules) {
-          $retryCount = 0
-          $maxRetries = 3
-          $success = $false
-          while (-not $success -and $retryCount -lt $maxRetries) {
-            try {
-              Write-Host "Installing module $module..."
-              Install-Module -Name $module -Force -AllowClobber -ErrorAction Stop
-              Write-Host "Module $module installed successfully."
-              $success = $true
-            } catch {
-              Write-Host "Failed to install module $module: $_"
-              $retryCount++
-              if ($retryCount -lt $maxRetries) {
-                Write-Host "Retrying installation of module $module ($retryCount/$maxRetries)..."
-                Start-Sleep -Seconds 10
-              } else {
-                Write-Host "Exceeded maximum retries for module $module. Exiting..."
-                exit 1
-              }
-            }
-          }
+          Write-Host "Installing module $module..."
+          Install-Module -Name $module -Force -AllowClobber -ErrorAction Stop
+          Write-Host "Module $module installed successfully."
         }
 
     - name: 🥳 Connect to Azure
@@ -162,6 +171,9 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         enable-AzPSSession: true
+
+    
+
 
     - name: Deploy Resource Groups and Create Key Vaults for AKS and AVD
       shell: pwsh
@@ -202,6 +214,27 @@ jobs:
         Set-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks" -SecretValue (ConvertTo-SecureString -String $publicKeyAks -AsPlainText -Force)
         Set-AzKeyVaultSecret -VaultName "${{ env.avdKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAvd" -SecretValue (ConvertTo-SecureString -String $publicKeyAvd -AsPlainText -Force)
 
+    - name: Register Kubernetes Cluster with Azure Arc
+      shell: pwsh
+      run: |
+        $resourceGroupName = "aks-kubernetes-arc-rg-dev"
+        $location = "norwayeast"
+        $clusterName = "coolAksCluster1"
+        $sshPublicKey = Get-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks"
+
+        az connectedk8s connect --name $clusterName --resource-group $resourceGroupName --location $location --ssh-private-key-path "$env:HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev" --ssh-public-key $sshPublicKey
+
+    - name: Create Custom Location
+      shell: pwsh
+      run: |
+        $resourceGroupName = "aks-kubernetes-arc-rg-dev"
+        $location = "norwayeast"
+        $customLocationName = "mylaptop-custom-location"
+        $connectedClusterId = az connectedk8s show --name "coolAksCluster1" --resource-group $resourceGroupName --query id --output tsv
+
+        az customlocation create --resource-group $resourceGroupName --name $customLocationName --location $location --host-resource-id $connectedClusterId --namespace my-namespace
+
+      
     - name: Register the Hyper-V Machine with Azure Arc
       shell: pwsh
       run: |
