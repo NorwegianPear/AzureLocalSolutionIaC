@@ -220,9 +220,16 @@ jobs:
         $resourceGroupName = "aks-kubernetes-arc-rg-dev"
         $location = "norwayeast"
         $clusterName = "coolAksCluster1"
-        $sshPublicKey = Get-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks"
+        $sshDir = "$env:HOME/.ssh"
+        if (-Not (Test-Path -Path $sshDir)) {
+          New-Item -ItemType Directory -Force -Path $sshDir
+        }
+        $sshPrivateKey = Get-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPrivateKeyAks" -AsPlainText
+        $sshPublicKey = Get-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks" -AsPlainText
+        Set-Content -Path "$sshDir/sshkey-aks-kubernetes-arc-rg-dev" -Value $sshPrivateKey
+        Set-Content -Path "$sshDir/sshkey-aks-kubernetes-arc-rg-dev.pub" -Value $sshPublicKey
 
-        az connectedk8s connect --name $clusterName --resource-group $resourceGroupName --location $location --ssh-private-key-path "$env:HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev" --ssh-public-key $sshPublicKey
+        az connectedk8s connect --name $clusterName --resource-group $resourceGroupName --location $location --ssh-private-key-path "$sshDir/sshkey-aks-kubernetes-arc-rg-dev" --ssh-public-key $sshPublicKey
 
     - name: Create Custom Location
       shell: pwsh
@@ -230,11 +237,11 @@ jobs:
         $resourceGroupName = "aks-kubernetes-arc-rg-dev"
         $location = "norwayeast"
         $customLocationName = "mylaptop-custom-location"
-        $connectedClusterId = az connectedk8s show --name "coolAksCluster1" --resource-group $resourceGroupName --query id --output tsv
+        $connectedClusterId = az connectedk8s show --name $clusterName --resource-group $resourceGroupName --query id --output tsv
 
         az customlocation create --resource-group $resourceGroupName --name $customLocationName --location $location --host-resource-id $connectedClusterId --namespace my-namespace
 
-      
+ 
     - name: Register the Hyper-V Machine with Azure Arc
       shell: pwsh
       run: |
