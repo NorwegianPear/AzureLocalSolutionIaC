@@ -6,6 +6,7 @@ function Restart-AsAdmin {
 
     try {
         Write-Host "This script requires administrator permissions. Attempting to restart script with elevated permissions..."
+        $scriptPath = $MyInvocation.MyCommand.Path
         $arguments = "-NoExit -Command `"& '$scriptPath'`""
         Start-Process $pwshCommand -Verb runAs -ArgumentList $arguments
         exit 0

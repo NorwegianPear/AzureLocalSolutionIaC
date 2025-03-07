@@ -70,6 +70,16 @@ jobs:
     - name: 🤑💸Checkout parameter
       uses: actions/checkout@v3
 
+    - name: Ensure Runner is Started
+      shell: pwsh
+      run: |
+        $runnerProcess = Get-Process -Name "run" -ErrorAction SilentlyContinue
+        if (-not $runnerProcess) {
+          Write-Host "Starting self-hosted runner..."
+          Start-Process -FilePath "C:\actions-runner\run.cmd" -NoNewWindow
+        } else {
+          Write-Host "Self-hosted runner is already running."
+        }
 
     - name: Install Minikube
       shell: pwsh
@@ -87,7 +97,8 @@ jobs:
     - name: Start Minikube with elevated permissions
       shell: pwsh
       run: |
-        .\powershellscripts\start-minikube.ps1
+        Start-Process -FilePath "powershell" -ArgumentList "Start-Process -FilePath 'powershell' -ArgumentList 'minikube start --driver=hyperv' -Verb runAs -Wait" -Verb runAs -Wait
+
 
     - name: Install Azure CLI
       if: false
@@ -345,3 +356,14 @@ jobs:
           -aksCluster2ClientID $aksCluster2ClientID `
           -aksCluster2ClientSecret $aksCluster2ClientSecret
 
+    - name: Stop Self-Hosted Runner
+      if: always()
+      shell: pwsh
+      run: |
+        $runnerProcess = Get-Process -Name "run" -ErrorAction SilentlyContinue
+        if ($runnerProcess) {
+          Write-Host "Stopping self-hosted runner..."
+          Stop-Process -Name "run" -Force
+        } else {
+          Write-Host "Self-hosted runner is not running."
+        }
