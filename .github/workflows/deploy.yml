@@ -84,10 +84,10 @@ jobs:
           Write-Host "Minikube is already installed."
         }
 
-    - name: Start Minikube
+    - name: Start Minikube with elevated permissions
       shell: pwsh
       run: |
-        minikube start --driver=hyperv
+        .\powershellscripts\start-minikube.ps1
 
     - name: Install Azure CLI
       if: false
