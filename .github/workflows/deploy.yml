@@ -97,7 +97,7 @@ jobs:
     - name: Start Minikube with elevated permissions
       shell: pwsh
       run: |
-        Start-Process -FilePath "powershell" -ArgumentList "Start-Process -FilePath 'powershell' -ArgumentList 'minikube start --driver=hyperv' -Verb runAs -Wait" -Verb runAs -Wait
+        Start-Process -FilePath "powershell" -ArgumentList "Start-Process -FilePath 'powershell' -ArgumentList 'minikube start --driver=hyperv' -Verb runAs -Wait" -Verb runAs
 
 
     - name: Install Azure CLI

@@ -1,0 +1,75 @@
+name: Deploy Azure Jumpstart ArcBox
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: write
+
+env:
+  TenantID: ${{ secrets.TENANT_ID }}
+  AppID: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+  AppObjectID: ${{ secrets.AZURELOCALSOLUTIONIAC_OBJECTID }}
+  Subscription: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  Location: 'norwayeast'
+  aks-resourceGroupName: 'aks-kubernetes-arc-rg'
+  KeyVaultName: '<your-keyvault-name>'
+  SSHKeyName: '<your-ssh-key-name>'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install Azure CLI
+      shell: pwsh
+      run: |
+        if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
+          Write-Host "Azure CLI not found. Installing Azure CLI..."
+          Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile ./AzureCLI.msi -TimeoutSec 600
+          Start-Process msiexec.exe -ArgumentList '/I AzureCLI.msi /quiet' -Wait -NoNewWindow
+          Remove-Item ./AzureCLI.msi
+          Write-Host "Azure CLI installation completed."
+        } else {
+          Write-Host "Azure CLI is already installed."
+        }
+
+    - name: Install PowerShell Modules
+      shell: pwsh
+      run: |
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $modules = @("Az.Accounts", "Az.Resources", "Az.KeyVault")
+        foreach ($module in $modules) {
+          Write-Host "Installing module $module..."
+          Install-Module -Name $module -Force -AllowClobber -ErrorAction Stop
+          Write-Host "Module $module installed successfully."
+        }
+
+    - name: 🥳 Connect to Azure
+      id: azure-login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Retrieve SSH Public Key from Key Vault
+      shell: pwsh
+      run: |
+        $sshRSAPublicKey = (Get-AzKeyVaultSecret -VaultName ${{ env.KeyVaultName }} -Name ${{ env.SSHKeyName }}).SecretValueText
+        Write-Host "SSH Public Key retrieved successfully."
+
+    - name: Deploy Azure Resources
+      shell: pwsh
+      run: |
+        $RGname = "${{ env.aks-resourceGroupName }}"
+        $Location = "${{ env.Location }}"
+        $sshRSAPublicKey = (Get-AzKeyVaultSecret -VaultName "${{ env.KeyVaultName }}" -Name "${{ env.SSHKeyName }}").SecretValueText
+        New-AzResourceGroup -Name $RGname -Location $Location
+        New-AzResourceGroupDeployment -Name arcbox -ResourceGroupName $RGname -TemplateFile "./azure_jumpstart_arcbox/bicep/main.bicep" -TemplateParameterFile "./azure_jumpstart_arcbox/bicep/main.bicepparam" -sshRSAPublicKey $sshRSAPublicKey
