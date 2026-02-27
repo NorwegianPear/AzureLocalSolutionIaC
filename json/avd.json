@@ -33,14 +33,14 @@
                     "osType": "Windows",
                     "vmSize": "Standard_DS1_v2",
                     "adminUsername": "azureuser",
-                    "adminPassword": "P@ssw0rd1234"
+                    "adminPassword": "#{AVD_ADMIN_PASSWORD}#"
                 },
                 {
                     "name": "linuxArcServer",
                     "osType": "Linux",
                     "vmSize": "Standard_DS1_v2",
                     "adminUsername": "azureuser",
-                    "adminPassword": "P@ssw0rd1234"
+                    "adminPassword": "#{AVD_ADMIN_PASSWORD}#"
                 }
             ]
         },

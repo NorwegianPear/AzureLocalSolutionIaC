@@ -25,12 +25,14 @@ try {
         }
 }
 
-    $env:SUBSCRIPTION_ID = "ecfca6b3-6f73-421f-8d02-7f31ed0978bc";
-    $env:RESOURCE_GROUP = "aks-kubernetes-arc-rg-dev";
-    $env:TENANT_ID = "973a580f-021f-4dc0-88de-48b060e43df1";
-    $env:LOCATION = "norwayeast";
+    # These values must be set as environment variables before running this script
+    # or passed via GitHub Actions secrets
+    if (-not $env:SUBSCRIPTION_ID) { throw "SUBSCRIPTION_ID environment variable is not set." }
+    if (-not $env:RESOURCE_GROUP) { $env:RESOURCE_GROUP = "aks-kubernetes-arc-rg-dev" }
+    if (-not $env:TENANT_ID) { throw "TENANT_ID environment variable is not set." }
+    if (-not $env:LOCATION) { $env:LOCATION = "norwayeast" }
     $env:AUTH_TYPE = "token";
-    $env:CORRELATION_ID = "059e8b09-3a2f-43b8-9ad3-a7d3d8e7b9b6";
+    if (-not $env:CORRELATION_ID) { $env:CORRELATION_ID = [guid]::NewGuid().ToString() }
     $env:CLOUD = "AzureCloud";
     
 

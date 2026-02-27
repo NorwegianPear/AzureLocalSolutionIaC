@@ -3,22 +3,22 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "spnClientId": {
-            "value": "<your service principal client id>"
+            "value": ""
         },
         "spnClientSecret": {
-            "value": "<your service principal secret>"
+            "value": ""
         },
         "spnTenantId": {
-            "value": "<your service principal tenant id>"
+            "value": ""
         },
         "spnProviderId": {
-            "value": "<your Microsoft.AzureStackHCI resource provider object id>"
+            "value": ""
         },
         "windowsAdminUsername": {
             "value": "arcdemo"
         },
         "windowsAdminPassword": {
-            "value": "ArcPassword123!!"
+            "value": ""
         },
         "logAnalyticsWorkspaceName": {
             "value": "HCIBox-Workspace"
@@ -27,7 +27,7 @@
             "value": false
         },
         "autoDeployClusterResource": {
-            "value": false
+            "value": true
         },
         "autoUpgradeClusterResource": {
             "value": false

@@ -2,11 +2,11 @@ using 'main.bicep'
 
 param sshRSAPublicKey = ''
 
-param tenantId = '973a580f-021f-4dc0-88de-48b060e43df1'
+param tenantId = readEnvironmentVariable('AZURE_TENANT_ID', '')
 
 param windowsAdminUsername = 'arcdemo'
 
-param windowsAdminPassword = 'arcdemo123!123!'
+param windowsAdminPassword = readEnvironmentVariable('ARCBOX_ADMIN_PASSWORD', '')
 
 param logAnalyticsWorkspaceName = 'arcdemo'
 

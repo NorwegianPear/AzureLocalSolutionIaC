@@ -1,0 +1,258 @@
+name: Deploy Arc-enabled VMware vSphere
+run-name: ${{ github.actor }} deploying Arc VMware to ${{ github.event.inputs.site }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: 'Target site'
+        required: true
+        type: choice
+        options:
+          - stavanger
+          - oslo
+          - both
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - status
+          - disable-costs
+          - enable-monitoring
+          - teardown
+
+permissions:
+  id-token: write
+  contents: read
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  Location: 'norwayeast'
+
+jobs:
+  # ======================================================================
+  # Step 1: Register required Azure providers (one-time)
+  # ======================================================================
+  register-providers:
+    if: github.event.inputs.action == 'deploy'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Connect to Azure
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Register providers for Arc VMware
+      run: |
+        az provider register --namespace Microsoft.HybridCompute --wait
+        az provider register --namespace Microsoft.GuestConfiguration --wait
+        az provider register --namespace Microsoft.ExtendedLocation --wait
+        az provider register --namespace Microsoft.ResourceConnector --wait
+        az provider register --namespace Microsoft.ConnectedVMwarevSphere --wait
+        az provider register --namespace Microsoft.OperationalInsights --wait
+        echo "All providers registered."
+
+  # ======================================================================
+  # Step 2: Deploy Arc Resource Bridge + vCenter to site(s)
+  # ======================================================================
+  deploy-stavanger:
+    if: github.event.inputs.action == 'deploy' && (github.event.inputs.site == 'stavanger' || github.event.inputs.site == 'both')
+    needs: register-providers
+    runs-on: self-hosted
+    environment: dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Connect to Azure
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Deploy Arc VMware - Stavanger
+      run: |
+        # Try to get vCenter password from Key Vault first, fall back to GitHub secret
+        $vCenterPwd = $null
+        try {
+          $vCenterPwd = Get-AzKeyVaultSecret -VaultName 'atea-cisbench-kv-dev' -Name 'vcenter-password' -AsPlainText -ErrorAction Stop
+        } catch {
+          try {
+            $vCenterPwd = Get-AzKeyVaultSecret -VaultName 'kv-stavanger-dev-539' -Name 'vcenter-password' -AsPlainText -ErrorAction Stop
+          } catch {
+            $vCenterPwd = "${{ secrets.VCENTER_PASSWORD }}"
+          }
+        }
+        $vCenterPassword = ConvertTo-SecureString -String $vCenterPwd -AsPlainText -Force
+
+        New-AzSubscriptionDeployment `
+          -Name "ArcVMware-Stavanger-${{ github.run_number }}" `
+          -TemplateFile "bicep/arc-vmware/main.bicep" `
+          -TemplateParameterFile "json/arc-vmware-stavanger.json" `
+          -vCenterPassword $vCenterPassword `
+          -location "${{ env.Location }}" `
+          -Verbose
+
+    - name: Run Resource Bridge onboarding on Stavanger lab
+      run: |
+        # The Resource Bridge must be bootstrapped from a machine with network 
+        # access to the vCenter. This runs on the self-hosted runner at the site.
+        # 
+        # Prerequisites on the runner machine:
+        # 1. Network access to vCenter at the FQDN specified in parameters
+        # 2. az CLI with arcappliance extension installed
+        #
+        az extension add --name arcappliance --upgrade
+        az extension add --name connectedvmware --upgrade
+
+        $rgName = "arc-vmware-stavanger-dev"
+        $applianceName = "arc-bridge-stavanger-dev"
+        
+        Write-Host "Arc Resource Bridge created in Azure. To complete onboarding:"
+        Write-Host "1. Run 'az arcappliance createconfig vmware' on a machine with vCenter access"
+        Write-Host "2. Run 'az arcappliance validate vmware' to validate the config"
+        Write-Host "3. Run 'az arcappliance prepare vmware' to prepare the infrastructure"
+        Write-Host "4. Run 'az arcappliance deploy vmware' to deploy the bridge VM"
+        Write-Host "5. Run 'az arcappliance create vmware' to connect to Azure"
+        Write-Host ""
+        Write-Host "Resource Group: $rgName"
+        Write-Host "Appliance Name: $applianceName"
+
+  deploy-oslo:
+    if: github.event.inputs.action == 'deploy' && (github.event.inputs.site == 'oslo' || github.event.inputs.site == 'both')
+    needs: register-providers
+    runs-on: self-hosted
+    environment: dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Connect to Azure
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Deploy Arc VMware - Oslo
+      run: |
+        # Try to get vCenter password from Key Vault first, fall back to GitHub secret
+        $vCenterPwd = $null
+        try {
+          $vCenterPwd = Get-AzKeyVaultSecret -VaultName 'kv-oslo-dev-912' -Name 'vcenter-password' -AsPlainText -ErrorAction Stop
+        } catch {
+          try {
+            $vCenterPwd = Get-AzKeyVaultSecret -VaultName 'atea-cisbench-kv-dev' -Name 'vcenter-password' -AsPlainText -ErrorAction Stop
+          } catch {
+            $vCenterPwd = "${{ secrets.VCENTER_PASSWORD }}"
+          }
+        }
+        $vCenterPassword = ConvertTo-SecureString -String $vCenterPwd -AsPlainText -Force
+
+        New-AzSubscriptionDeployment `
+          -Name "ArcVMware-Oslo-${{ github.run_number }}" `
+          -TemplateFile "bicep/arc-vmware/main.bicep" `
+          -TemplateParameterFile "json/arc-vmware-oslo.json" `
+          -vCenterPassword $vCenterPassword `
+          -location "${{ env.Location }}" `
+          -Verbose
+
+    - name: Run Resource Bridge onboarding on Oslo lab
+      run: |
+        az extension add --name arcappliance --upgrade
+        az extension add --name connectedvmware --upgrade
+
+        $rgName = "arc-vmware-oslo-dev"
+        $applianceName = "arc-bridge-oslo-dev"
+        
+        Write-Host "Arc Resource Bridge created in Azure. To complete onboarding:"
+        Write-Host "1. Run 'az arcappliance createconfig vmware' on a machine with vCenter access"
+        Write-Host "2. Run 'az arcappliance validate vmware' to validate the config"  
+        Write-Host "3. Run 'az arcappliance prepare vmware' to prepare the infrastructure"
+        Write-Host "4. Run 'az arcappliance deploy vmware' to deploy the bridge VM"
+        Write-Host "5. Run 'az arcappliance create vmware' to connect to Azure"
+        Write-Host ""
+        Write-Host "Resource Group: $rgName"
+        Write-Host "Appliance Name: $applianceName"
+
+  # ======================================================================
+  # Step 3: Cost management - disable/enable costly extensions
+  # ======================================================================
+  manage-costs:
+    if: github.event.inputs.action == 'disable-costs' || github.event.inputs.action == 'enable-monitoring' || github.event.inputs.action == 'status'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install PowerShell modules
+      run: |
+        Install-Module -Name Az.Accounts -Force -AllowClobber
+        Install-Module -Name Az.ConnectedMachine -Force -AllowClobber
+        Install-Module -Name Az.Resources -Force -AllowClobber
+        Install-Module -Name Az.OperationalInsights -Force -AllowClobber
+
+    - name: Connect to Azure
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Manage Arc connection costs
+      run: |
+        $action = '${{ github.event.inputs.action }}'
+        $site = '${{ github.event.inputs.site }}'
+        
+        $psAction = switch ($action) {
+          'disable-costs' { 'disable' }
+          'enable-monitoring' { 'enable' }
+          'status' { 'status' }
+        }
+        
+        $psSite = if ($site -eq 'both') { 'all' } else { $site }
+        
+        & "./powershellscripts/Manage-ArcConnection.ps1" -Action $psAction -Site $psSite
+
+  # ======================================================================
+  # Step 4: Teardown (remove everything from Azure, VMware untouched)
+  # ======================================================================
+  teardown:
+    if: github.event.inputs.action == 'teardown'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+    - name: Connect to Azure
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Teardown Arc VMware resources (VMware untouched)
+      run: |
+        $site = '${{ github.event.inputs.site }}'
+        $sites = if ($site -eq 'both') { @('stavanger', 'oslo') } else { @($site) }
+        
+        foreach ($s in $sites) {
+          $rgName = "arc-vmware-$s-dev"
+          Write-Host "Removing resource group: $rgName"
+          Write-Host "NOTE: This only removes Azure Arc resources. Your VMware VMs are NOT affected."
+          az group delete --name $rgName --yes --no-wait
+          Write-Host "Teardown initiated for $s. Resource group $rgName is being deleted."
+        }
+        
+        Write-Host ""
+        Write-Host "All Azure costs for Arc VMware will stop once deletion completes."
+        Write-Host "Your VMware infrastructure remains completely intact."

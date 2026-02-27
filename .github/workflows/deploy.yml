@@ -198,9 +198,9 @@ jobs:
           -azurelocalsolutioniac_clientid "${{ secrets.AZURELOCALSOLUTIONIAC_CLIENTID }}" `
           -azurelocalsolutioniac_objectid "${{ secrets.AZURELOCALSOLUTIONIAC_OBJECTID }}" `
           -aksCluster1ObjectID "${{ secrets.COOLAKSCLUSTER1_OBJECTID }}" `
-          -aksCluster2ObjectID "${{ secrets.COOLAKSCLUSTER2.OBJECTID }}" `
-          -aksCluster1ClientID "${{ secrets.COOLAKSCLUSTER1.CLIENTID }}" `
-          -aksCluster2ClientID "${{ secrets.COOLAKSCLUSTER2.CLIENTID }}"
+          -aksCluster2ObjectID "${{ secrets.COOLAKSCLUSTER2_OBJECTID }}" `
+          -aksCluster1ClientID "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}" `
+          -aksCluster2ClientID "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}"
 
     - name: Generate and Store SSH Keys in Key Vaults for AKS and AVD
       shell: pwsh
@@ -319,21 +319,15 @@ jobs:
             Write-Host -ForegroundColor red $_.Exception
         }
 
-    - name: Register Kubernetes Cluster with Azure Arc
+    - name: Register Second Kubernetes Cluster with Azure Arc
       shell: pwsh
       run: |
         $resourceGroupName = "aks-kubernetes-arc-rg-dev"
         $location = "norwayeast"
-        $clusterName = "my-aks-cluster"
-        $sshPublicKey = Get-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks"
+        $clusterName = "coolAksCluster2"
+        $sshPublicKey = Get-AzKeyVaultSecret -VaultName "${{ env.aksKeyVaultName }}-${{ env.environmentName }}" -Name "SSHPublicKeyAks" -AsPlainText
 
-        # Install Azure CLI
-        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-        # Install Azure Arc CLI extension
-        az extension add --name connectedk8s
-
-        # Register Kubernetes cluster with Azure Arc
+        # Register second Kubernetes cluster with Azure Arc
         az connectedk8s connect --name $clusterName --resource-group $resourceGroupName --location $location --ssh-private-key-path "$env:HOME/.ssh/sshkey-aks-kubernetes-arc-rg-dev" --ssh-public-key $sshPublicKey
 
     - name: Deploy Bicep for AKS
@@ -341,8 +335,8 @@ jobs:
       run: |
         $aksCluster1ClientID = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER1_CLIENTID }}" -AsPlainText -Force
         $aksCluster1ClientSecret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER1_SECRET }}" -AsPlainText -Force
-        $aksCluster2ClientID = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2.CLIENTID }}" -AsPlainText -Force
-        $aksCluster2ClientSecret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2.SECRET }}" -AsPlainText -Force
+        $aksCluster2ClientID = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2_CLIENTID }}" -AsPlainText -Force
+        $aksCluster2ClientSecret = ConvertTo-SecureString -String "${{ secrets.COOLAKSCLUSTER2_SECRET }}" -AsPlainText -Force
 
         New-AzSubscriptionDeployment -Name "Deployment-DEV-${{ github.actor }}-$(get-random)" `
           -TemplateFile "bicep/main.bicep" `

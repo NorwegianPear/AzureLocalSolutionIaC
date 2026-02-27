@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "value": "stavanger"
+        },
+        "location": {
+            "value": "norwayeast"
+        },
+        "environmentType": {
+            "value": "dev"
+        },
+        "vCenterFqdn": {
+            "value": "vc02.atealab.net"
+        },
+        "vCenterPort": {
+            "value": 443
+        },
+        "vCenterUsername": {
+            "value": "administrator@vsphere.local"
+        },
+        "tags": {
+            "value": {
+                "Site": "Stavanger",
+                "Region": "Rogaland",
+                "deployedBy": "Uy Le Thai Phan",
+                "Project": "AzureLocalSolutionIaC",
+                "Repository": "https://github.com/NorwegianPear/AzureLocalSolutionIaC"
+            }
+        }
+    }
+}

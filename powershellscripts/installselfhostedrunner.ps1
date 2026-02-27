@@ -31,7 +31,11 @@ if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
 }
 
 # Create the runner and start the configuration experience
-Start-Process -FilePath "C:\actions-runner\config.cmd" -ArgumentList "--url https://github.com/atea/azurelocalsolutioniac --token AMHJMQ37WWMIXEVKLUMRGNLHYBNSG" -NoNewWindow -Wait
+# Pass the runner token as an environment variable: $env:RUNNER_TOKEN
+if (-not $env:RUNNER_TOKEN) {
+    throw "RUNNER_TOKEN environment variable is not set. Generate a new token at: https://github.com/atea/azurelocalsolutioniac/settings/actions/runners/new"
+}
+Start-Process -FilePath "C:\actions-runner\config.cmd" -ArgumentList "--url https://github.com/atea/azurelocalsolutioniac --token $env:RUNNER_TOKEN" -NoNewWindow -Wait
 
 # Run the runner
 Start-Process -FilePath "C:\actions-runner\run.cmd" -NoNewWindow
